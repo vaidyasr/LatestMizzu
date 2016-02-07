@@ -19,7 +19,6 @@ package com.miz.db;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.text.TextUtils;
 
 import java.util.ArrayList;
 
@@ -62,7 +61,8 @@ public class DbAdapterMovieMappings extends AbstractDbAdapter {
 	}
 	
 	public boolean deleteAllUnidentifiedFilepaths() {
-		return mDatabase.delete(DATABASE_TABLE, KEY_TMDB_ID + " = ?", new String[]{DbAdapterMovies.UNIDENTIFIED_ID}) > 0;
+		return mDatabase.delete(DATABASE_TABLE, KEY_TMDB_ID + " = ?",
+				new String[]{String.valueOf(DbAdapterMovies.UNIDENTIFIED_ID)}) > 0;
 	}
 
 	public String getFirstFilepathForMovie(String tmdbId) {
@@ -83,11 +83,12 @@ public class DbAdapterMovieMappings extends AbstractDbAdapter {
 		return filepath;
 	}
 
-	public boolean updateTmdbId(String filepath, String currentId, String newId) {
+	public boolean updateTmdbId(String filepath, int currentId, String newId) {
 		ContentValues values = new ContentValues();
 		values.put(KEY_TMDB_ID, newId);
 
-		return mDatabase.update(DATABASE_TABLE, values, KEY_FILEPATH + " = ? AND " + KEY_TMDB_ID + " = ?", new String[]{filepath, currentId}) > 0;
+		return mDatabase.update(DATABASE_TABLE, values, KEY_FILEPATH + " = ? AND " + KEY_TMDB_ID +
+                " = ?", new String[]{filepath, String.valueOf(currentId)}) > 0;
 	}
 
     public boolean updateTmdbId(String filepath, String newId) {
@@ -132,16 +133,18 @@ public class DbAdapterMovieMappings extends AbstractDbAdapter {
 		return result;
 	}
 
-	public boolean deleteMovie(String tmdbId) {
-		return mDatabase.delete(DATABASE_TABLE, KEY_TMDB_ID + " = ?", new String[]{tmdbId}) > 0;
+	public boolean deleteMovie(int tmdbId) {
+		return mDatabase.delete(DATABASE_TABLE, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(tmdbId)}) > 0;
 	}
 
 	public boolean deleteAllMovies() {
 		return mDatabase.delete(DATABASE_TABLE, null, null) > 0;
 	}
 
-	public boolean hasMultipleFilepaths(String tmdbId) {
-		Cursor cursor = mDatabase.query(DATABASE_TABLE, ALL_COLUMNS, KEY_TMDB_ID + " = ?", new String[]{tmdbId}, null, null, null);
+	public boolean hasMultipleFilepaths(int tmdbId) {
+		Cursor cursor = mDatabase.query(DATABASE_TABLE, ALL_COLUMNS, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(tmdbId)}, null, null, null);
 		boolean result = false;
 
 		if (cursor != null) {
@@ -162,12 +165,14 @@ public class DbAdapterMovieMappings extends AbstractDbAdapter {
      * @param tmdbId
      * @return
      */
-	public ArrayList<String> getMovieFilepaths(String tmdbId) {
-        if (TextUtils.isEmpty(tmdbId))
-            return new ArrayList<>();
+	public ArrayList<String> getMovieFilepaths(int tmdbId) {
+        if (tmdbId == DbAdapterMovies.UNIDENTIFIED_ID) {
+			return new ArrayList<>();
+		}
 
-		Cursor cursor = mDatabase.query(DATABASE_TABLE, ALL_COLUMNS, KEY_TMDB_ID + " = ? AND " + KEY_IGNORED + " = '0'", new String[]{tmdbId}, null, null, null);
-		ArrayList<String> paths = new ArrayList<String>();
+		Cursor cursor = mDatabase.query(DATABASE_TABLE, ALL_COLUMNS, KEY_TMDB_ID + " = ? AND " +
+				KEY_IGNORED + " = '0'", new String[]{String.valueOf(tmdbId)}, null, null, null);
+		ArrayList<String> paths = new ArrayList<>();
 
 		if (cursor != null) {
 			try {

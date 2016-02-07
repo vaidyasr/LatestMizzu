@@ -46,8 +46,8 @@ public class DownloadImageService extends IntentService {
 	public static final int IMAGE_TYPE_MOVIE_COVER = 3;
 	public static final int IMAGE_TYPE_MOVIE_BACKDROP = 4;
 
-	private String mImageUrl = "", mContentId = "", mDownloadPath = "";
-	private int mImageType = 0;
+	private String mImageUrl = "", mDownloadPath = "";
+	private int mImageType = 0, mContentId;
 	private boolean mNeedsResizing = false;
 
 	private final int NOTIFICATION_ID = 54321;
@@ -82,7 +82,7 @@ public class DownloadImageService extends IntentService {
 		// Get the current setup
 		Bundle bundle = intent.getExtras();
 		mImageUrl = bundle.getString(IMAGE_URL, "");
-		mContentId = bundle.getString(CONTENT_ID, "");
+		mContentId = bundle.getInt(CONTENT_ID, 0);
 		mImageType = bundle.getInt(IMAGE_TYPE, 0);
 
 		// Setup...
@@ -109,7 +109,7 @@ public class DownloadImageService extends IntentService {
 		switch (mImageType) {
 		case IMAGE_TYPE_TVSHOW_COVER:
 
-			mDownloadPath = FileUtils.getTvShowThumb(this, mContentId).getAbsolutePath();
+			mDownloadPath = FileUtils.getTvShowThumb(this, String.valueOf(mContentId)).getAbsolutePath();
 
 			break;
 
@@ -118,7 +118,7 @@ public class DownloadImageService extends IntentService {
             // TMDb URL's need to have part of it replaced with something else
             mImageUrl = mImageUrl.replace(MizLib.getBackdropThumbUrlSize(this), MizLib.getBackdropUrlSize(this));
 
-			mDownloadPath = FileUtils.getTvShowBackdrop(this, mContentId).getAbsolutePath();
+			mDownloadPath = FileUtils.getTvShowBackdrop(this, String.valueOf(mContentId)).getAbsolutePath();
 
 			break;
 
@@ -189,7 +189,7 @@ public class DownloadImageService extends IntentService {
 
 	private void clear() {
 		mImageUrl = "";
-		mContentId = "";
+		mContentId = 0;
 		mDownloadPath = "";
 		mImageType = 0;
 		mNeedsResizing = false;

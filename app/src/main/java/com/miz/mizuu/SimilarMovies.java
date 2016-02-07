@@ -19,7 +19,7 @@ public class SimilarMovies extends MizActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		String movieId = getIntent().getExtras().getString("movieId");
+		int movieId = getIntent().getExtras().getInt("movieId");
 		String title = getIntent().getExtras().getString("title");
         mToolbarColor = getIntent().getExtras().getInt(IntentKeys.TOOLBAR_COLOR);
 		

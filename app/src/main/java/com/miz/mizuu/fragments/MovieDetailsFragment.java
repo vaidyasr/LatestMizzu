@@ -119,10 +119,10 @@ public class MovieDetailsFragment extends Fragment {
      */
     public MovieDetailsFragment() {}
 
-    public static MovieDetailsFragment newInstance(String tmdbId) {
+    public static MovieDetailsFragment newInstance(int tmdbId) {
         MovieDetailsFragment pageFragment = new MovieDetailsFragment();
         Bundle bundle = new Bundle();
-        bundle.putString("tmdbId", tmdbId);
+        bundle.putInt("tmdbId", tmdbId);
         pageFragment.setArguments(bundle);
         return pageFragment;
     }
@@ -148,13 +148,13 @@ public class MovieDetailsFragment extends Fragment {
 
         mDatabase = MizuuApplication.getMovieAdapter();
 
-        Cursor cursor = mDatabase.fetchMovie(getArguments().getString("tmdbId"));
+        Cursor cursor = mDatabase.fetchMovie(getArguments().getInt("tmdbId"));
         try {
             mMovie = new Movie(mContext,
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TITLE)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_PLOT)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TAGLINE)),
-                    cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TMDB_ID)),
+                    cursor.getInt(cursor.getColumnIndex(DbAdapterMovies.KEY_TMDB_ID)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_IMDB_ID)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_RATING)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_RELEASEDATE)),
@@ -165,7 +165,7 @@ public class MovieDetailsFragment extends Fragment {
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_FAVOURITE)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_ACTORS)),
                     MizuuApplication.getCollectionsAdapter().getCollection(cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_COLLECTION_ID))),
-                    cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_COLLECTION_ID)),
+                    cursor.getInt(cursor.getColumnIndex(DbAdapterMovies.KEY_COLLECTION_ID)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TO_WATCH)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_HAS_WATCHED)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_DATE_ADDED))

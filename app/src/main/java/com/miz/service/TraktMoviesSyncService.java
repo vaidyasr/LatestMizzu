@@ -42,7 +42,7 @@ public class TraktMoviesSyncService extends IntentService {
 
 	private ArrayList<Movie> mMovies;
 	private ArrayList<String> mTmdbIds;
-	private HashSet<String> mMovieCollection, mWatchedMovies, mMovieFavorites, mWatchlist;
+	private HashSet<Integer> mMovieCollection, mWatchedMovies, mMovieFavorites, mWatchlist;
 	private NotificationCompat.Builder mBuilder;
 	private NotificationManager mNotificationManager;
 	private DbAdapterMovies mMovieDatabase;
@@ -124,12 +124,12 @@ public class TraktMoviesSyncService extends IntentService {
 	}
 
 	private void setup() {
-		mMovies = new ArrayList<Movie>();
-		mTmdbIds = new ArrayList<String>();
-		mMovieCollection = new HashSet<String>();
-		mWatchedMovies = new HashSet<String>();
-		mMovieFavorites = new HashSet<String>();
-		mWatchlist = new HashSet<String>();
+		mMovies = new ArrayList<>();
+		mTmdbIds = new ArrayList<>();
+		mMovieCollection = new HashSet<>();
+		mWatchedMovies = new HashSet<>();
+		mMovieFavorites = new HashSet<>();
+		mWatchlist = new HashSet<>();
 	}
 
 	private void setupNotification() {
@@ -169,7 +169,7 @@ public class TraktMoviesSyncService extends IntentService {
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TITLE)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_PLOT)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TAGLINE)),
-						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TMDB_ID)),
+						cursor.getInt(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TMDB_ID)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_IMDB_ID)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_RATING)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_RELEASEDATE)),
@@ -180,7 +180,7 @@ public class TraktMoviesSyncService extends IntentService {
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_FAVOURITE)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_ACTORS)),
 						MizuuApplication.getCollectionsAdapter().getCollection(cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID))),
-						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID)),
+						cursor.getInt(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TO_WATCH)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_HAS_WATCHED)),
 						cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_DATE_ADDED))
@@ -200,7 +200,7 @@ public class TraktMoviesSyncService extends IntentService {
 		if (jsonArray.length() > 0) {
 			for (int i = 0; i < jsonArray.length(); i++) {
 				try {
-					mMovieCollection.add(String.valueOf(jsonArray.getJSONObject(i).get("tmdb_id")));
+					mMovieCollection.add(jsonArray.getJSONObject(i).getInt("tmdb_id"));
 				} catch (Exception e) {}
 			}
 		}
@@ -237,7 +237,7 @@ public class TraktMoviesSyncService extends IntentService {
 		if (jsonArray.length() > 0) {
 			for (int i = 0; i < jsonArray.length(); i++) {
 				try {
-					String tmdbId = String.valueOf(jsonArray.getJSONObject(i).get("tmdb_id"));
+					int tmdbId = jsonArray.getJSONObject(i).getInt("tmdb_id");
 					mWatchedMovies.add(tmdbId);
 					mMovieDatabase.updateMovieSingleItem(tmdbId, DbAdapterMovies.KEY_HAS_WATCHED, "1");
 				} catch (Exception e) {}
@@ -269,7 +269,7 @@ public class TraktMoviesSyncService extends IntentService {
 		if (jsonArray.length() > 0) {
 			for (int i = 0; i < jsonArray.length(); i++) {
 				try {
-					String tmdbId = String.valueOf(jsonArray.getJSONObject(i).get("tmdb_id"));
+					int tmdbId = jsonArray.getJSONObject(i).getInt("tmdb_id");
 					mMovieFavorites.add(tmdbId);
 					mMovieDatabase.updateMovieSingleItem(tmdbId, DbAdapterMovies.KEY_FAVOURITE, "1");
 				} catch (Exception e) {}
@@ -301,7 +301,7 @@ public class TraktMoviesSyncService extends IntentService {
 		if (jsonArray.length() > 0) {
 			for (int i = 0; i < jsonArray.length(); i++) {
 				try {
-					String tmdbId = String.valueOf(jsonArray.getJSONObject(i).get("tmdb_id"));
+					int tmdbId = jsonArray.getJSONObject(i).getInt("tmdb_id");
 					mWatchlist.add(tmdbId);
 					mMovieDatabase.updateMovieSingleItem(tmdbId, DbAdapterMovies.KEY_TO_WATCH, "1");
 				} catch (Exception e) {}

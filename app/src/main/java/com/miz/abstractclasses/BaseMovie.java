@@ -30,11 +30,12 @@ import java.util.List;
 
 public abstract class BaseMovie implements Comparable<BaseMovie> {
 
-	protected ArrayList<Filepath> mFilepaths = new ArrayList<Filepath>();
+	protected ArrayList<Filepath> mFilepaths = new ArrayList<>();
 	protected Context mContext;
-	protected String mTitle, mTmdbId;
+	protected String mTitle;
+	protected int mTmdbId;
 
-	public BaseMovie(Context context, String title, String tmdbId) {
+	public BaseMovie(Context context, String title, int tmdbId) {
 		// Set up movie fields based on constructor
 		mContext = context;
 		mTitle = title;
@@ -71,7 +72,7 @@ public abstract class BaseMovie implements Comparable<BaseMovie> {
 		return FileUtils.getMovieThumb(mContext, mTmdbId);
 	}
 
-	public String getTmdbId() {
+	public int getTmdbId() {
 		return mTmdbId;
 	}
 

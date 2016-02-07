@@ -74,8 +74,8 @@ public class CollectionLibraryFragment extends Fragment implements OnSharedPrefe
     private SharedPreferences mSharedPreferences;
     private int mImageThumbSize, mImageThumbSpacing, mResizedWidth, mResizedHeight, mCurrentSort;
     private LoaderAdapter mAdapter;
-    private ArrayList<MediumMovie> mMovies = new ArrayList<MediumMovie>();
-    private ArrayList<Integer> mMovieKeys = new ArrayList<Integer>();
+    private ArrayList<MediumMovie> mMovies = new ArrayList<>();
+    private ArrayList<Integer> mMovieKeys = new ArrayList<>();
     private GridView mGridView = null;
     private ProgressBar mProgressBar;
     private boolean mLoading, mShowTitles;
@@ -175,14 +175,14 @@ public class CollectionLibraryFragment extends Fragment implements OnSharedPrefe
                         while (cursor.moveToNext()) {
                             mMovies.add(new MediumMovie(getActivity(),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TITLE)),
-                                    cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TMDB_ID)),
+                                    cursor.getInt(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TMDB_ID)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_RATING)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_RELEASEDATE)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_GENRES)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_FAVOURITE)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_ACTORS)),
                                     MizuuApplication.getCollectionsAdapter().getCollection(cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID))),
-                                    cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID)),
+                                    cursor.getInt(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TO_WATCH)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_HAS_WATCHED)),
                                     cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_DATE_ADDED)),

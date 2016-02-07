@@ -262,7 +262,7 @@ public class ActorMoviesFragment extends Fragment {
 			mActor = TMDbMovieService.getInstance(mContext).getCompleteActorDetails(mActorId);
 
 			for (int i = 0; i < mActor.getMovies().size(); i++) {
-				String id = mActor.getMovies().get(i).getId();
+				int id = mActor.getMovies().get(i).getId();
 				mActor.getMovies().get(i).setInLibrary(MizuuApplication.getMovieAdapter().movieExists(id));
 			}
 

@@ -64,7 +64,7 @@ public class MizuuApplication extends Application {
 	private static Bus sBus;
 	private static File sBaseAppFolder, sMovieThumbFolder, sMovieBackdropFolder, sTvShowThumbFolder, sTvShowBackdropFolder, sTvShowEpisodeFolder, sTvShowSeasonFolder, sAvailableOfflineFolder, sCacheFolder;
 	private static Context mInstance;
-	private static ArrayListMultimap<String, String> mMovieFilepaths;
+	private static ArrayListMultimap<Integer, String> mMovieFilepaths;
 	private static OkHttpClient mOkHttpClient;
 
 	@Override
@@ -319,13 +319,13 @@ public class MizuuApplication extends Application {
 	 * This is used as an optimization to loading the movie library view.
 	 * @param filepaths
 	 */
-	public static void setMovieFilepaths(ArrayListMultimap<String, String> filepaths) {
+	public static void setMovieFilepaths(ArrayListMultimap<Integer, String> filepaths) {
 		mMovieFilepaths = filepaths;
 	}
 
-	public static List<String> getMovieFilepaths(String id) {
-		if (mMovieFilepaths != null && mMovieFilepaths.containsKey(id))
-			return mMovieFilepaths.get(id);
+	public static List<String> getMovieFilepaths(int movieId) {
+		if (mMovieFilepaths != null && mMovieFilepaths.containsKey(movieId))
+			return mMovieFilepaths.get(movieId);
 		return null;
 	}
 

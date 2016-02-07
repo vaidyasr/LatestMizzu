@@ -38,11 +38,11 @@ import com.miz.utils.ViewUtils;
 
 public class MovieCoverFanartBrowser extends MizActivity  {
 
-	private String mTmdbId, mCollectionId, mBaseUrl = "", mJson = "", mCollection = "", mTmdbApiKey;
+	private String mBaseUrl = "", mJson = "", mCollection = "", mTmdbApiKey;
 	private ViewPager mViewPager;
 	private ProgressBar mProgressBar;
     private PagerSlidingTabStrip mTabs;
-    private int mToolbarColor;
+    private int mToolbarColor, mTmdbId, mCollectionId;
 
 	@Override
 	protected int getLayoutResource() {
@@ -58,8 +58,8 @@ public class MovieCoverFanartBrowser extends MizActivity  {
         if (MizLib.hasLollipop())
             getSupportActionBar().setElevation(0);
 
-        mTmdbId = getIntent().getExtras().getString("tmdbId");
-        mCollectionId = getIntent().getExtras().getString("collectionId");
+        mTmdbId = getIntent().getExtras().getInt("tmdbId");
+        mCollectionId = getIntent().getExtras().getInt("collectionId");
         mToolbarColor = getIntent().getExtras().getInt(IntentKeys.TOOLBAR_COLOR);
 		mTmdbApiKey = MizLib.getTmdbApiKey(this);
 

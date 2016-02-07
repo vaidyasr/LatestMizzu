@@ -63,10 +63,10 @@ public class ActorBrowserFragment extends Fragment {
 	 */
 	public ActorBrowserFragment() {}
 
-	public static ActorBrowserFragment newInstance(String movieId) { 
+	public static ActorBrowserFragment newInstance(int movieId) {
 		ActorBrowserFragment pageFragment = new ActorBrowserFragment();
 		Bundle bundle = new Bundle();
-		bundle.putString("movieId", movieId);
+		bundle.putInt("movieId", movieId);
 		pageFragment.setArguments(bundle);		
 		return pageFragment;
 	}
@@ -134,7 +134,7 @@ public class ActorBrowserFragment extends Fragment {
 		super.onActivityCreated(savedInstanceState);
 
 		if (mActors.size() == 0)
-			new GetActorDetails(getArguments().getString("movieId"), getActivity()).execute();
+			new GetActorDetails(getArguments().getInt("movieId"), getActivity()).execute();
 	}
 	
 	private class ImageAdapter extends BaseAdapter {
@@ -217,9 +217,9 @@ public class ActorBrowserFragment extends Fragment {
 	protected class GetActorDetails extends AsyncTask<Void, Void, Void> {
 
 		private final Context mContext;
-		private final String mMovieId;
+		private final int mMovieId;
 
-		public GetActorDetails(String movieId, Context context) {
+		public GetActorDetails(int movieId, Context context) {
 			mMovieId = movieId;
 			mContext = context;
 		}
@@ -232,7 +232,7 @@ public class ActorBrowserFragment extends Fragment {
 		@Override
 		protected Void doInBackground(Void... params) {
 			MovieApiService service = MizuuApplication.getMovieService(mContext);
-			mActors = new ArrayList<Actor>(service.getActors(mMovieId));
+			mActors = new ArrayList<>(service.getActors(mMovieId));
 
 			return null;
 		}

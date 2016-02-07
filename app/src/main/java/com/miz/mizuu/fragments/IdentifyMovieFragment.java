@@ -228,7 +228,7 @@ public class IdentifyMovieFragment extends Fragment {
             Bundle b = new Bundle();
             b.putString("filepath", mFilepath);
             b.putString("currentMovieId", mCurrentMovieId);
-            b.putString("movieId", mAdapter.getItem(id).getId());
+            b.putInt("movieId", mAdapter.getItem(id).getId());
             b.putString("language", getSelectedLanguage());
             identifyService.putExtras(b);
 
@@ -420,9 +420,10 @@ public class IdentifyMovieFragment extends Fragment {
 
     public class Result {
 
-        private final String mName, mId, mImage, mRating, mRelease, mOriginalTitle;
+        private final String mName, mImage, mRating, mRelease, mOriginalTitle;
+        private final int mId;
 
-        public Result(String name, String originalTitle, String id, String image, String rating, String release) {
+        public Result(String name, String originalTitle, int id, String image, String rating, String release) {
             mName = name;
             mOriginalTitle = originalTitle;
             mId = id;
@@ -443,7 +444,7 @@ public class IdentifyMovieFragment extends Fragment {
             return "(" + mOriginalTitle + ")";
         }
 
-        public String getId() {
+        public int getId() {
             return mId;
         }
 

@@ -80,7 +80,7 @@ public class IntentUtils {
 	 * @param movieId
 	 * @return
 	 */
-	public static Intent getActorBrowserMovies(Context context, String title, String movieId, int toolbarColor) {
+	public static Intent getActorBrowserMovies(Context context, String title, int movieId, int toolbarColor) {
 		Intent actorIntent = new Intent(context, ActorBrowser.class);
 		actorIntent.putExtra("title", title);
 		actorIntent.putExtra("movieId", movieId);
@@ -110,7 +110,7 @@ public class IntentUtils {
 	 * @param movieId
 	 * @return
 	 */
-	public static Intent getSimilarMovies(Context context, String title, String movieId, int toolbarColor) {
+	public static Intent getSimilarMovies(Context context, String title, int movieId, int toolbarColor) {
 		Intent similarMoviesIntent = new Intent(context, SimilarMovies.class);
 		similarMoviesIntent.putExtra("title", title);
 		similarMoviesIntent.putExtra("movieId", movieId);

@@ -166,7 +166,7 @@ public class TvShowIdentification {
                 if (results.size() == 0)
                     results = service.search(showFolderName, null);
             } else
-                show = service.get(getShowId(), mLocale);
+                show = service.get(Integer.valueOf(getShowId()), mLocale);
 
             // Check if the show folder name results in any matches
             // - if it does, use that to identify all files
@@ -174,7 +174,7 @@ public class TvShowIdentification {
 
                 // Get the TV show and create it in the database
                 if (!overrideShowId())
-                    show = service.get(results.get(0).getId(), mLocale);
+                    show = service.get(Integer.valueOf(results.get(0).getId()), mLocale);
                 createShow(show);
 
                 int episodeCount = 0;
@@ -225,7 +225,7 @@ public class TvShowIdentification {
                         show = new TvShow();
                         show.setId(DbAdapterTvShows.UNIDENTIFIED_ID);
                     } else {
-                        show = service.get(results.get(0).getId(), mLocale);
+                        show = service.get(Integer.valueOf(results.get(0).getId()), mLocale);
                     }
 
                     createShow(show);

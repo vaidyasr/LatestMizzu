@@ -61,10 +61,10 @@ public class SimilarMoviesFragment extends Fragment {
 	 */
 	public SimilarMoviesFragment() {}
 
-	public static SimilarMoviesFragment newInstance(String tmdbId) { 
+	public static SimilarMoviesFragment newInstance(int tmdbId) {
 		SimilarMoviesFragment pageFragment = new SimilarMoviesFragment();
 		Bundle bundle = new Bundle();
-		bundle.putString("tmdbId", tmdbId);
+		bundle.putInt("tmdbId", tmdbId);
 		pageFragment.setArguments(bundle);
 		return pageFragment;
 	}
@@ -120,7 +120,7 @@ public class SimilarMoviesFragment extends Fragment {
 			}
 		});
 
-		new GetMovies(getActivity()).execute(getArguments().getString("tmdbId"));
+		new GetMovies(getActivity()).execute(getArguments().getInt("tmdbId"));
 	}
 
 	@Override
@@ -189,7 +189,7 @@ public class SimilarMoviesFragment extends Fragment {
 		}
 	}
 
-	protected class GetMovies extends AsyncTask<String, String, String> {
+	protected class GetMovies extends AsyncTask<Integer, String, String> {
 		
 		private Context mContext;
 		
@@ -198,13 +198,13 @@ public class SimilarMoviesFragment extends Fragment {
 		}
 		
 		@Override
-		protected String doInBackground(String... params) {
+		protected String doInBackground(Integer... params) {
 			try {
 				MovieApiService service = MizuuApplication.getMovieService(mContext);
 				mSimilarMovies = service.getSimilarMovies(params[0]);
 
 				for (int i = 0; i < mSimilarMovies.size(); i++) {
-					String id = mSimilarMovies.get(i).getId();
+					int id = mSimilarMovies.get(i).getId();
 					mSimilarMovies.get(i).setInLibrary(MizuuApplication.getMovieAdapter().movieExists(id));
 				}
 			} catch (Exception e) { e.printStackTrace(); }

@@ -56,7 +56,7 @@ public abstract class MovieFileSource<T> extends AbstractFileSource<T> {
 			while (tempCursor.moveToNext()) {
 				mDbMovies.add(new DbMovie(getContext(),
 						MizuuApplication.getMovieMappingAdapter().getFirstFilepathForMovie(tempCursor.getString(cache.getColumnIndex(tempCursor, DbAdapterMovieMappings.KEY_TMDB_ID))),
-						tempCursor.getString(cache.getColumnIndex(tempCursor, DbAdapterMovies.KEY_TMDB_ID)),
+						tempCursor.getInt(cache.getColumnIndex(tempCursor, DbAdapterMovies.KEY_TMDB_ID)),
 						tempCursor.getString(cache.getColumnIndex(tempCursor, DbAdapterMovies.KEY_RUNTIME)),
 						tempCursor.getString(cache.getColumnIndex(tempCursor, DbAdapterMovies.KEY_RELEASEDATE)),
 						tempCursor.getString(cache.getColumnIndex(tempCursor, DbAdapterMovies.KEY_GENRES)),

@@ -22,11 +22,12 @@ import com.miz.mizuu.R;
 
 public class WebMovie {
 
-	private String mTitle, mId, mUrl, mDate;
+	private String mTitle, mUrl, mDate;
 	private Context mContext;
 	private boolean mInLibrary;
+	private int mId;
 
-	public WebMovie(Context context, String title, String id, String url, String date) {
+	public WebMovie(Context context, String title, int id, String url, String date) {
 		mContext = context;
 		mTitle = title;
 		mId = id;
@@ -35,7 +36,7 @@ public class WebMovie {
 	}
 
 	public String getTitle() { return mTitle; }
-	public String getId() { return mId; }
+	public int getId() { return mId; }
 	public String getUrl() { return mUrl; }
 	public String getRawDate() { return mDate; }
 	public boolean isInLibrary() { return mInLibrary; }

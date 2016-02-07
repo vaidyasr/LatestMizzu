@@ -15,7 +15,7 @@ public class EditMovie extends MizActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		final String movieId = getIntent().getStringExtra("movieId");
+		final int movieId = getIntent().getIntExtra("movieId", 0);
         mToolbarColor = getIntent().getExtras().getInt(IntentKeys.TOOLBAR_COLOR);
 
 		final FragmentManager fm = getSupportFragmentManager();

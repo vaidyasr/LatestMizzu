@@ -32,7 +32,7 @@ import com.miz.utils.ViewUtils;
 public class MovieDetails extends MizActivity {
 
 	private static String TAG = "MovieDetailsFragment";
-	private String mMovieId;
+	private int mMovieId;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -47,9 +47,9 @@ public class MovieDetails extends MizActivity {
 
 		// Fetch the database ID of the movie to view
 		if (Intent.ACTION_SEARCH.equals(getIntent().getAction())) {
-			mMovieId = getIntent().getStringExtra(SearchManager.EXTRA_DATA_KEY);
+			mMovieId = getIntent().getIntExtra(SearchManager.EXTRA_DATA_KEY, 0);
 		} else {
-			mMovieId = getIntent().getExtras().getString("tmdbId");
+			mMovieId = getIntent().getExtras().getInt("tmdbId");
 		}
 
 		Fragment frag = getSupportFragmentManager().findFragmentByTag(TAG);

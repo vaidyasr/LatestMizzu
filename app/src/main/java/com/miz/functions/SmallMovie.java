@@ -22,7 +22,7 @@ import com.miz.abstractclasses.BaseMovie;
 
 public class SmallMovie extends BaseMovie {
 
-	public SmallMovie(Context context, String title, String tmdbId) {
+	public SmallMovie(Context context, String title, int tmdbId) {
 		super(context, title, tmdbId);
 	}
 }

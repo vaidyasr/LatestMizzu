@@ -452,7 +452,7 @@ public class TvShowDetailsFragment extends Fragment {
             @Override
             protected Void doInBackground(Void... params) {
                 TMDbTvShowService service = TMDbTvShowService.getInstance(mContext);
-                mActors = service.getActors(thisShow.getId());
+                mActors = service.getActors(Integer.valueOf(thisShow.getId()));
 
                 return null;
             }

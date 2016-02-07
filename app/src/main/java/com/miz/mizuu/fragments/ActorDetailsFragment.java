@@ -379,14 +379,14 @@ public class ActorDetailsFragment extends Fragment {
             mActor = service.getCompleteActorDetails(mActorId);
 
             for (int i = 0; i < mActor.getMovies().size(); i++) {
-                String id = mActor.getMovies().get(i).getId();
+                int id = mActor.getMovies().get(i).getId();
                 mActor.getMovies().get(i).setInLibrary(MizuuApplication.getMovieAdapter().movieExists(id));
             }
 
             for (int i = 0; i < mActor.getTvShows().size(); i++) {
-                String id = mActor.getTvShows().get(i).getId();
+                int id = mActor.getTvShows().get(i).getId();
                 String title = mActor.getTvShows().get(i).getTitle();
-                mActor.getTvShows().get(i).setInLibrary(MizuuApplication.getTvDbAdapter().showExists(id, title));
+                mActor.getTvShows().get(i).setInLibrary(MizuuApplication.getTvDbAdapter().showExists(String.valueOf(id), title));
             }
 
             return null;

@@ -89,7 +89,7 @@ public class TMDbMovieService extends MovieApiService {
 				movie.setReleasedate(array.getJSONObject(i).getString("release_date"));
 				movie.setPlot(""); // TMDb doesn't support descriptions in search results
 				movie.setRating(String.valueOf(array.getJSONObject(i).getDouble("vote_average")));
-				movie.setId(String.valueOf(array.getJSONObject(i).getInt("id")));
+				movie.setId(array.getJSONObject(i).getInt("id"));
 				movie.setCover(baseUrl + imageSizeUrl + array.getJSONObject(i).getString("poster_path"));
 				results.add(movie);
 			}
@@ -99,12 +99,13 @@ public class TMDbMovieService extends MovieApiService {
 	}
 
 	@Override
-	public Movie get(String id, String json, String language) {
+	public Movie get(int id, String json, String language) {
 		Movie movie = new Movie();
 		movie.setId(id);
 
-		if (id.equals(DbAdapterMovies.UNIDENTIFIED_ID))
+		if (id == DbAdapterMovies.UNIDENTIFIED_ID) {
 			return movie;
+		}
 
 		try {
 			// Get the base URL from the preferences
@@ -158,10 +159,10 @@ public class TMDbMovieService extends MovieApiService {
 
 			try {
 				movie.setCollectionTitle(jObject.getJSONObject("belongs_to_collection").getString("name"));
-				movie.setCollectionId(jObject.getJSONObject("belongs_to_collection").getString("id"));
+				movie.setCollectionId(jObject.getJSONObject("belongs_to_collection").getInt("id"));
 			} catch (Exception e) {}
 
-			if (!TextUtils.isEmpty(movie.getCollectionId()) && json == null) {
+			if (movie.getCollectionId() > 0 && json == null) {
 				JSONObject collection = MizLib.getJSONObject(mContext, "https://api.themoviedb.org/3/collection/" + movie.getCollectionId() + "/images?api_key=" + mTmdbApiKey);
 				JSONArray array = collection.getJSONArray("posters");
 				if (array.length() > 0)
@@ -241,15 +242,15 @@ public class TMDbMovieService extends MovieApiService {
 	}
 
 	@Override
-	public Movie get(String id, String language) {
+	public Movie get(int id, String language) {
 		return get(id, null, language);
 	}
 	
-	public Movie getCompleteMovie(String id, String language) {
+	public Movie getCompleteMovie(int id, String language) {
 		Movie movie = new Movie();
 		movie.setId(id);
 
-		if (id.equals(DbAdapterMovies.UNIDENTIFIED_ID))
+		if (id == DbAdapterMovies.UNIDENTIFIED_ID)
 			return movie;
 
 		try {
@@ -361,7 +362,7 @@ public class TMDbMovieService extends MovieApiService {
 					if (!MizLib.isAdultContent(mContext, jArray.getJSONObject(i).getString("title")) && !MizLib.isAdultContent(mContext, jArray.getJSONObject(i).getString("original_title"))) {
 						similarMovies.add(new WebMovie(mContext,
 								jArray.getJSONObject(i).getString("original_title"),
-								jArray.getJSONObject(i).getString("id"),
+								jArray.getJSONObject(i).getInt("id"),
 								baseUrl + MizLib.getImageUrlSize(mContext) + jArray.getJSONObject(i).getString("poster_path"),
 								jArray.getJSONObject(i).getString("release_date")));
 					}
@@ -397,7 +398,7 @@ public class TMDbMovieService extends MovieApiService {
 	}
 
 	@Override
-	public List<String> getCovers(String id) {
+	public List<String> getCovers(int id) {
 		ArrayList<String> covers = new ArrayList<String>();
 		String baseUrl = MizLib.getTmdbImageBaseUrl(mContext);
 
@@ -413,7 +414,7 @@ public class TMDbMovieService extends MovieApiService {
 	}
 
 	@Override
-	public List<String> getBackdrops(String id) {
+	public List<String> getBackdrops(int id) {
 		ArrayList<String> covers = new ArrayList<String>();
 		String baseUrl = MizLib.getTmdbImageBaseUrl(mContext);
 
@@ -445,7 +446,7 @@ public class TMDbMovieService extends MovieApiService {
 				movie.setReleasedate(array.getJSONObject(i).getString("release_date"));
 				movie.setPlot(""); // TMDb doesn't support descriptions in search results
 				movie.setRating(String.valueOf(array.getJSONObject(i).getDouble("vote_average")));
-				movie.setId(String.valueOf(array.getJSONObject(i).getInt("id")));
+				movie.setId(array.getJSONObject(i).getInt("id"));
 				movie.setCover(baseUrl + imageSizeUrl + array.getJSONObject(i).getString("poster_path"));
 				results.add(movie);
 			}
@@ -468,7 +469,7 @@ public class TMDbMovieService extends MovieApiService {
 	}
 
 	@Override
-	public List<Actor> getActors(String id) {
+	public List<Actor> getActors(int id) {
 		ArrayList<Actor> results = new ArrayList<Actor>();
 
 		String baseUrl = MizLib.getTmdbImageBaseUrl(mContext);
@@ -477,7 +478,7 @@ public class TMDbMovieService extends MovieApiService {
 			JSONObject jObject = MizLib.getJSONObject(mContext, "https://api.themoviedb.org/3/movie/" + id + "/credits?api_key=" + mTmdbApiKey);	
 			JSONArray jArray = jObject.getJSONArray("cast");
 
-			Set<String> actorIds = new HashSet<String>();
+			Set<String> actorIds = new HashSet<>();
 
 			for (int i = 0; i < jArray.length(); i++) {
 				if (!actorIds.contains(jArray.getJSONObject(i).getString("id"))) {
@@ -496,8 +497,8 @@ public class TMDbMovieService extends MovieApiService {
 	}
 
 	@Override
-	public List<WebMovie> getSimilarMovies(String id) {
-		ArrayList<WebMovie> results = new ArrayList<WebMovie>();
+	public List<WebMovie> getSimilarMovies(int id) {
+		ArrayList<WebMovie> results = new ArrayList<>();
 
 		String baseUrl = MizLib.getTmdbImageBaseUrl(mContext);
 
@@ -509,7 +510,7 @@ public class TMDbMovieService extends MovieApiService {
 				if (!MizLib.isAdultContent(mContext, jArray.getJSONObject(i).getString("title")) && !MizLib.isAdultContent(mContext, jArray.getJSONObject(i).getString("original_title"))) {
 					results.add(new WebMovie(mContext,
 							jArray.getJSONObject(i).getString("original_title"),
-							jArray.getJSONObject(i).getString("id"),
+							jArray.getJSONObject(i).getInt("id"),
 							baseUrl + MizLib.getImageUrlSize(mContext) + jArray.getJSONObject(i).getString("poster_path"),
 							jArray.getJSONObject(i).getString("release_date")));
 				}
@@ -560,7 +561,7 @@ public class TMDbMovieService extends MovieApiService {
 
 				WebMovie movie = new WebMovie(mContext,
 						MizLib.getStringFromJSONObject(thisObject, "title", ""),
-						String.valueOf(thisObject.getInt("id")),
+						thisObject.getInt("id"),
 						baseUrl + MizLib.getImageUrlSize(mContext) + MizLib.getStringFromJSONObject(thisObject, "poster_path", ""),
 						MizLib.getStringFromJSONObject(thisObject, "release_date", ""));
 
@@ -588,7 +589,7 @@ public class TMDbMovieService extends MovieApiService {
 
 				WebMovie show = new WebMovie(mContext,
 						MizLib.getStringFromJSONObject(thisObject, "name", ""),
-						String.valueOf(thisObject.getInt("id")),
+						thisObject.getInt("id"),
 						baseUrl + MizLib.getImageUrlSize(mContext) + MizLib.getStringFromJSONObject(thisObject, "poster_path", ""),
 						MizLib.getStringFromJSONObject(thisObject, "first_air_date", ""));
 

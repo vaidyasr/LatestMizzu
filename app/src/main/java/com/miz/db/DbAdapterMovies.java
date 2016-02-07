@@ -50,8 +50,7 @@ public class DbAdapterMovies extends AbstractDbAdapter {
 
     public static final String DATABASE_TABLE = "movie";
 
-    public static final String UNIDENTIFIED_ID = "invalid";
-    public static final int NEW_UNIDENTIFIED_ID = -1;
+    public static final int UNIDENTIFIED_ID = -1;
 
     public static final String[] SELECT_ALL = new String[] {KEY_TMDB_ID, KEY_TITLE, KEY_PLOT, KEY_IMDB_ID, KEY_RATING, KEY_TAGLINE, KEY_RELEASEDATE, KEY_CERTIFICATION,
             KEY_RUNTIME, KEY_TRAILER, KEY_GENRES, KEY_FAVOURITE, KEY_ACTORS, KEY_COLLECTION_ID, KEY_TO_WATCH, KEY_HAS_WATCHED, KEY_DATE_ADDED};
@@ -63,11 +62,11 @@ public class DbAdapterMovies extends AbstractDbAdapter {
     /**
      * Create a new movie
      */
-    public void createMovie(String tmdbid, String title, String plot, String imdbid, String rating, String tagline, String release,
+    public void createMovie(int tmdbid, String title, String plot, String imdbid, String rating, String tagline, String release,
                             String certification, String runtime, String trailer, String genres, String favourite, String actors, String collection,
                             String collectionId, String toWatch, String hasWatched, String date) {
 
-        if (tmdbid.equals(UNIDENTIFIED_ID))
+        if (tmdbid == UNIDENTIFIED_ID)
             return; // We're not interesting in adding this to the movie database
 
         if (movieExists(tmdbid))
@@ -79,7 +78,7 @@ public class DbAdapterMovies extends AbstractDbAdapter {
         MizuuApplication.getCollectionsAdapter().createCollection(tmdbid, collectionId, collection);
     }
 
-    public void createOrUpdateMovie(String tmdbid, String title, String plot, String imdbid, String rating, String tagline, String release,
+    public void createOrUpdateMovie(int tmdbid, String title, String plot, String imdbid, String rating, String tagline, String release,
                                     String certification, String runtime, String trailer, String genres, String favourite, String actors, String collection,
                                     String collectionId, String toWatch, String hasWatched, String date) {
         if (movieExists(tmdbid)) {
@@ -97,29 +96,33 @@ public class DbAdapterMovies extends AbstractDbAdapter {
     /**
      * Update the movie
      */
-    private boolean updateMovie(String tmdbid, String title, String plot, String imdbid, String rating, String tagline, String release,
+    private boolean updateMovie(int tmdbid, String title, String plot, String imdbid, String rating, String tagline, String release,
                                 String certification, String runtime, String trailer, String genres, String actors, String collection, String collectionId, String date) {
 
         ContentValues updateValues = createUpdateContentValues(title, plot, imdbid, rating, tagline, release, certification,
                 runtime, trailer, genres, actors, collectionId, date);
 
-        return mDatabase.update(DATABASE_TABLE, updateValues, KEY_TMDB_ID + " = ?", new String[]{tmdbid}) > 0 &&
-                MizuuApplication.getCollectionsAdapter().createCollection(tmdbid, collectionId, collection) > 0;
+        return mDatabase.update(DATABASE_TABLE, updateValues, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(tmdbid)}) > 0 && MizuuApplication.getCollectionsAdapter()
+                .createCollection(tmdbid, collectionId, collection) > 0;
     }
 
-    public boolean updateMovieSingleItem(String tmdbId, String column, String value) {
+    public boolean updateMovieSingleItem(int tmdbId, String column, String value) {
         ContentValues values = new ContentValues();
         values.put(column, value);
 
-        return mDatabase.update(DATABASE_TABLE, values, KEY_TMDB_ID + " = ?", new String[]{tmdbId}) > 0;
+        return mDatabase.update(DATABASE_TABLE, values, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(tmdbId)}) > 0;
     }
 
-    public String getSingleItem(String tmdbId, String column) {
-        if (TextUtils.isEmpty(tmdbId))
+    public String getSingleItem(int tmdbId, String column) {
+        if (tmdbId == UNIDENTIFIED_ID) {
             return "";
+        }
 
         String singleItem = "";
-        Cursor c = mDatabase.query(DATABASE_TABLE, new String[]{column}, KEY_TMDB_ID + " = ?", new String[]{tmdbId}, null, null, null);
+        Cursor c = mDatabase.query(DATABASE_TABLE, new String[]{column}, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(tmdbId)}, null, null, null);
         if (c != null) {
             try {
                 if (c.moveToFirst())
@@ -132,7 +135,7 @@ public class DbAdapterMovies extends AbstractDbAdapter {
         return singleItem;
     }
 
-    public boolean editMovie(String movieId, String title, String tagline, String description,
+    public boolean editMovie(int movieId, String title, String tagline, String description,
                              String genres, String runtime, String rating, String releaseDate, String certification) {
         ContentValues cv = new ContentValues();
         cv.put(KEY_TITLE, title);
@@ -143,23 +146,26 @@ public class DbAdapterMovies extends AbstractDbAdapter {
         cv.put(KEY_CERTIFICATION, certification);
         cv.put(KEY_RUNTIME, runtime);
         cv.put(KEY_GENRES, genres);
-        return mDatabase.update(DATABASE_TABLE, cv, KEY_TMDB_ID + " = ?", new String[]{movieId}) > 0;
+        return mDatabase.update(DATABASE_TABLE, cv, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(movieId)}) > 0;
     }
 
     /**
      * Deletes movie
      */
-    public boolean deleteMovie(String tmdbId) {
-        return mDatabase.delete(DATABASE_TABLE, KEY_TMDB_ID + " = ?", new String[]{tmdbId}) > 0;
+    public boolean deleteMovie(int tmdbId) {
+        return mDatabase.delete(DATABASE_TABLE, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(tmdbId)}) > 0;
     }
 
     public boolean deleteAllMovies() {
         return mDatabase.delete(DATABASE_TABLE, null, null) > 0;
     }
 
-    public String getCollectionId(String tmdbId) {
-        if (TextUtils.isEmpty(tmdbId))
+    public String getCollectionId(int tmdbId) {
+        if (tmdbId == UNIDENTIFIED_ID) {
             return "";
+        }
         return getSingleItem(tmdbId, KEY_COLLECTION_ID);
     }
 
@@ -199,16 +205,17 @@ public class DbAdapterMovies extends AbstractDbAdapter {
         return mDatabase.query(DATABASE_TABLE, SELECT_ALL, KEY_TO_WATCH + " = 1", null, null, null, KEY_TITLE + " ASC");
     }
 
-    public Cursor fetchMovie(String movieId) throws SQLException {
-        Cursor cursor = mDatabase.query(DATABASE_TABLE, SELECT_ALL, KEY_TMDB_ID + " = ?", new String[]{movieId}, null, null, null, null);
+    public Cursor fetchMovie(int movieId) throws SQLException {
+        Cursor cursor = mDatabase.query(DATABASE_TABLE, SELECT_ALL, KEY_TMDB_ID + " = ?", new String[]{String.valueOf(movieId)}, null, null, null, null);
         if (cursor != null) {
             cursor.moveToFirst();
         }
         return cursor;
     }
 
-    public boolean movieExists(String movieId) {
-        Cursor cursor = mDatabase.query(DATABASE_TABLE, SELECT_ALL, KEY_TMDB_ID + " = ?", new String[]{movieId}, null, null, null, null);
+    public boolean movieExists(int movieId) {
+        Cursor cursor = mDatabase.query(DATABASE_TABLE, SELECT_ALL, KEY_TMDB_ID + " = ?",
+                new String[]{String.valueOf(movieId)}, null, null, null, null);
 
         if (cursor != null)
             try {
@@ -220,10 +227,12 @@ public class DbAdapterMovies extends AbstractDbAdapter {
         return false;
     }
 
-    private ContentValues createContentValues(String tmdbid, String title,
-                                              String plot, String imdbid, String rating, String tagline, String release,
-                                              String certification, String runtime, String trailer, String genres, String favourite, String actors,
-                                              String collectionId, String toWatch, String hasWatched, String date, boolean includeTmdbId) {
+    private ContentValues createContentValues(int tmdbid, String title, String plot, String imdbid,
+                                              String rating, String tagline, String release,
+                                              String certification, String runtime, String trailer,
+                                              String genres, String favourite, String actors,
+                                              String collectionId, String toWatch, String hasWatched,
+                                              String date, boolean includeTmdbId) {
         ContentValues values = new ContentValues();
         values.put(KEY_TITLE, title);
         values.put(KEY_PLOT, plot);

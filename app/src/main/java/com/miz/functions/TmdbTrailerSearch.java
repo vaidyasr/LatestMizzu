@@ -34,10 +34,10 @@ import org.json.JSONObject;
  */
 public class TmdbTrailerSearch extends AsyncTask<String, Integer, String> {
 
-	private final String mMovieId;
+	private final int mMovieId;
 	private final Activity mActivity;
 
-	public TmdbTrailerSearch(Activity activity, String movieId) {
+	public TmdbTrailerSearch(Activity activity, int movieId) {
 		mActivity = activity;
 		mMovieId = movieId;
 	}

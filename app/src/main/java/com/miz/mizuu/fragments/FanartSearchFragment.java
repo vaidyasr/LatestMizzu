@@ -57,19 +57,20 @@ public class FanartSearchFragment extends Fragment {
 	private GridView mGridView = null;
 	private ProgressBar mProgressBar;
 	private String[] mItems = new String[]{};
-	private String mTmdbId, mJson;
+	private String mJson;
 	private Picasso mPicasso;
 	private Config mConfig;
+	private int mTmdbId;
 
 	/**
 	 * Empty constructor as per the Fragment documentation
 	 */
 	public FanartSearchFragment() {}
 	
-	public static FanartSearchFragment newInstance(String tmdbId, String json, String baseUrl) {
+	public static FanartSearchFragment newInstance(int tmdbId, String json, String baseUrl) {
 		FanartSearchFragment pageFragment = new FanartSearchFragment();
 		Bundle b = new Bundle();
-		b.putString("tmdbId", tmdbId);
+		b.putInt("tmdbId", tmdbId);
 		b.putString("json", json);
 		b.putString("baseUrl", baseUrl);
 		pageFragment.setArguments(b);
@@ -83,7 +84,7 @@ public class FanartSearchFragment extends Fragment {
 		setHasOptionsMenu(true);
 		setRetainInstance(true);
 
-		mTmdbId = getArguments().getString("tmdbId");
+		mTmdbId = getArguments().getInt("tmdbId");
 		
 		mPicasso = MizuuApplication.getPicasso(getActivity());
 		mConfig = MizuuApplication.getBitmapConfig();

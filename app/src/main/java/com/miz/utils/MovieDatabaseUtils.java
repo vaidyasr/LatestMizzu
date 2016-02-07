@@ -17,7 +17,6 @@
 package com.miz.utils;
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.miz.apis.trakt.Trakt;
@@ -55,9 +54,10 @@ public class MovieDatabaseUtils {
 		MizuuApplication.getMovieMappingAdapter().deleteAllUnidentifiedFilepaths();
 	}
 
-    public static void deleteMovie(Context context, String tmdbId) {
-        if (TextUtils.isEmpty(tmdbId))
+    public static void deleteMovie(Context context, int tmdbId) {
+        if (tmdbId == DbAdapterMovies.UNIDENTIFIED_ID) {
             return;
+        }
 
         DbAdapterMovies db = MizuuApplication.getMovieAdapter();
 

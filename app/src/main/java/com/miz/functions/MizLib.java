@@ -1963,8 +1963,8 @@ public class MizLib {
         return TextUtils.isDigitsOnly(runtime);
     }
 
-    public static boolean isValidTmdbId(String id) {
-        return !TextUtils.isEmpty(id) && !id.equals(DbAdapterMovies.UNIDENTIFIED_ID) && isNumber(id);
+    public static boolean isValidTmdbId(int id) {
+        return (id > 0) && id != DbAdapterMovies.UNIDENTIFIED_ID;
     }
 
     /**

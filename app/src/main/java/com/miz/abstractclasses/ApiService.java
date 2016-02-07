@@ -65,12 +65,12 @@ public abstract class ApiService<T> {
 	 * @param language Two-letter ISO 639-1 language code. Can be {@link null}.
 	 * @return Content object based on the supplied ID.
 	 */
-	public abstract T get(String id, String language);
+	public abstract T get(int id, String language);
 	
 	/**
 	 * Get actors for the given content ID.
 	 * @param id Movie or TV show ID.
 	 * @return {@link List} of {@link Actor} objects.
 	 */
-	public abstract List<Actor> getActors(String id);
+	public abstract List<Actor> getActors(int id);
 }

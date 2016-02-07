@@ -46,10 +46,10 @@ public class EditMovieFragment extends Fragment {
 
     public EditMovieFragment() {} // Empty constructor
 
-    public static EditMovieFragment newInstance(String movieId) {
+    public static EditMovieFragment newInstance(int movieId) {
         EditMovieFragment fragment = new EditMovieFragment();
         Bundle args = new Bundle();
-        args.putString("movieId", movieId);
+        args.putInt("movieId", movieId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -62,7 +62,7 @@ public class EditMovieFragment extends Fragment {
         setRetainInstance(true);
 
         // Load the movie details
-        loadMovie(getArguments().getString("movieId"));
+        loadMovie(getArguments().getInt("movieId"));
 
         // Hide the keyboard when the Activity starts
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -163,14 +163,14 @@ public class EditMovieFragment extends Fragment {
         });
     }
 
-    private void loadMovie(String movieId) {
+    private void loadMovie(int movieId) {
         Cursor cursor = MizuuApplication.getMovieAdapter().fetchMovie(movieId);
         try {
             mMovie = new Movie(getActivity(),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TITLE)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_PLOT)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TAGLINE)),
-                    cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TMDB_ID)),
+                    cursor.getInt(cursor.getColumnIndex(DbAdapterMovies.KEY_TMDB_ID)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_IMDB_ID)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_RATING)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_RELEASEDATE)),
@@ -181,7 +181,7 @@ public class EditMovieFragment extends Fragment {
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_FAVOURITE)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_ACTORS)),
                     MizuuApplication.getCollectionsAdapter().getCollection(cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_COLLECTION_ID))),
-                    cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_COLLECTION_ID)),
+                    cursor.getInt(cursor.getColumnIndex(DbAdapterMovies.KEY_COLLECTION_ID)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_TO_WATCH)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_HAS_WATCHED)),
                     cursor.getString(cursor.getColumnIndex(DbAdapterMovies.KEY_DATE_ADDED))

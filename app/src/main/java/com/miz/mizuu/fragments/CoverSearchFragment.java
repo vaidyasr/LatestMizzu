@@ -52,12 +52,12 @@ import java.util.TreeSet;
 
 public class CoverSearchFragment extends Fragment {
 
-	private int mImageThumbSize, mImageThumbSpacing;
+	private int mImageThumbSize, mImageThumbSpacing, mTmdbId;
 	private ImageAdapter mAdapter;
 	private ArrayList<Cover> mCovers = new ArrayList<Cover>();
 	private ArrayList<String> mImageUrls = new ArrayList<String>();
 	private GridView mGridView = null;
-	private String mTmdbId, mJson;
+	private String mJson;
 	private String[] mItems = new String[]{};
 	private ProgressBar mProgressBar;
 	private Picasso mPicasso;
@@ -68,10 +68,10 @@ public class CoverSearchFragment extends Fragment {
 	 */
 	public CoverSearchFragment() {}
 
-	public static CoverSearchFragment newInstance(String tmdbId, String json, String baseUrl) {
+	public static CoverSearchFragment newInstance(int tmdbId, String json, String baseUrl) {
 		CoverSearchFragment pageFragment = new CoverSearchFragment();
 		Bundle b = new Bundle();
-		b.putString("tmdbId", tmdbId);
+		b.putInt("tmdbId", tmdbId);
 		b.putString("json", json);
 		b.putString("baseUrl", baseUrl);
 		pageFragment.setArguments(b);
@@ -91,7 +91,7 @@ public class CoverSearchFragment extends Fragment {
 		mPicasso = MizuuApplication.getPicasso(getActivity());
 		mConfig = MizuuApplication.getBitmapConfig();
 
-		mTmdbId = getArguments().getString("tmdbId");
+		mTmdbId = getArguments().getInt("tmdbId");
 	}
 
 	@Override

@@ -95,11 +95,11 @@ public class TMDbTvShowService extends TvShowApiService {
 	}
 
 	@Override
-	public TvShow get(String id, String language) {
+	public TvShow get(int id, String language) {
 		language = getLanguage(language);
 
 		TvShow show = new TvShow();
-		show.setId(id);
+		show.setId(String.valueOf(id));
 
 		String baseUrl = MizLib.getTmdbImageBaseUrl(mContext);
 
@@ -341,7 +341,7 @@ public class TMDbTvShowService extends TvShowApiService {
 	}
 
 	@Override
-	public List<Actor> getActors(String id) {
+	public List<Actor> getActors(int id) {
 		ArrayList<Actor> results = new ArrayList<Actor>();
 
 		String baseUrl = MizLib.getTmdbImageBaseUrl(mContext);

@@ -26,14 +26,14 @@ import com.miz.utils.FileUtils;
 
 import java.io.File;
 
-
 public abstract class MediumBaseMovie extends BaseMovie {
 
-	protected String TO_WATCH, COLLECTION, COLLECTION_ID, RATING, FAVOURITE, HAS_WATCHED, RELEASEDATE, DATE_ADDED, GENRES, CAST, CERTIFICATION, RUNTIME;
+	protected String TO_WATCH, COLLECTION, RATING, FAVOURITE, HAS_WATCHED, RELEASEDATE, DATE_ADDED, GENRES, CAST, CERTIFICATION, RUNTIME;
 	protected String mGetReleaseYear, mWeightedCompatibility, mDateAdded, mRuntime, mReleaseDate;
+	protected int COLLECTION_ID;
 	
-	public MediumBaseMovie(Context context, String title, String tmdbId, String rating, String releasedate,
-			String genres, String favourite, String cast, String collection, String collectionId, String toWatch, String hasWatched,
+	public MediumBaseMovie(Context context, String title, int tmdbId, String rating, String releasedate,
+			String genres, String favourite, String cast, String collection, int collectionId, String toWatch, String hasWatched,
 			String date_added, String certification, String runtime) {
 		super(context, title, tmdbId);
 		
@@ -90,7 +90,7 @@ public abstract class MediumBaseMovie extends BaseMovie {
 		return COLLECTION;
 	}
 
-	public String getCollectionId() {
+	public int getCollectionId() {
 		return COLLECTION_ID;
 	}
 	

@@ -95,7 +95,7 @@ public class MovieContentProvider extends SearchRecentSuggestionsProvider {
 		throw new UnsupportedOperationException();
 	}
 
-	private Object[] createRow(Integer id, String text1, String text2, String icon, String tmdbId) {
+	private Object[] createRow(Integer id, String text1, String text2, String icon, int tmdbId) {
 		return new Object[] {
 				id, // _id
 				text1, // text1
@@ -126,14 +126,14 @@ public class MovieContentProvider extends SearchRecentSuggestionsProvider {
 					if (title.indexOf(query) != -1 ||  p.matcher(title).replaceAll("").indexOf(query) != -1) {
 						movies.add(new MediumMovie(getContext(),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_TITLE)),
-								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_TMDB_ID)),
+								c.getInt(cache.getColumnIndex(c, DbAdapterMovies.KEY_TMDB_ID)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_RATING)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_RELEASEDATE)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_GENRES)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_FAVOURITE)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_ACTORS)),
 								MizuuApplication.getCollectionsAdapter().getCollection(c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_COLLECTION_ID))),
-								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_COLLECTION_ID)),
+								c.getInt(cache.getColumnIndex(c, DbAdapterMovies.KEY_COLLECTION_ID)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_TO_WATCH)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_HAS_WATCHED)),
 								c.getString(cache.getColumnIndex(c, DbAdapterMovies.KEY_DATE_ADDED)),

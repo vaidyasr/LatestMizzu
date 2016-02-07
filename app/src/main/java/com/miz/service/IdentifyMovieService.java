@@ -45,7 +45,8 @@ import java.util.ArrayList;
 public class IdentifyMovieService extends IntentService implements MovieLibraryUpdateCallback {
 
 	private boolean mDebugging = true;
-	private String mMovieId, mOldMovieId, mLanguage, mFilepath;
+	private String mLanguage, mFilepath;
+	private int mMovieId, mOldMovieId;
 	private ArrayList<MovieStructure> mFiles = new ArrayList<>();
 	private final int NOTIFICATION_ID = 4500;
 	private NotificationManager mNotificationManager;
@@ -92,10 +93,10 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 
 		log("Intent extras");
 		Bundle b = intent.getExtras();
-		mMovieId = b.getString("movieId");
+		mMovieId = b.getInt("movieId");
 		mLanguage = b.getString("language", "en");
 		mFilepath = b.getString("filepath");
-		mOldMovieId = b.getString("currentMovieId");
+		mOldMovieId = b.getInt("currentMovieId");
 
 		log("setupList()");
 		setupList();
@@ -128,7 +129,7 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 	 * since this is an {@link IntentService}.
 	 */
 	private void clear() {
-		mMovieId = "";
+		mMovieId = 0;
 		mLanguage = "";
 		mFiles = new ArrayList<>();
 	}

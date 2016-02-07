@@ -26,9 +26,10 @@ import java.io.File;
 public class DbMovie {
 
 	private final Context mContext;
-	private final String mFilepath, mTmdbId, mRuntime, mYear, mGenres, mTitle;
+	private final String mFilepath, mRuntime, mYear, mGenres, mTitle;
+	private final int mTmdbId;
 
-	public DbMovie(Context context, String filepath, String tmdbId, String runtime, String year, String genres, String title) {
+	public DbMovie(Context context, String filepath, int tmdbId, String runtime, String year, String genres, String title) {
 		mContext = context;
 		mFilepath = filepath;
 		mTmdbId = tmdbId;
@@ -83,7 +84,7 @@ public class DbMovie {
 		return getFilepath().startsWith("http://");
 	}
 
-	public String getTmdbId() {
+	public int getTmdbId() {
 		return mTmdbId;
 	}
 

@@ -84,10 +84,10 @@ public class TmdbMovieDetailsFragment extends Fragment {
      */
     public TmdbMovieDetailsFragment() {}
 
-    public static TmdbMovieDetailsFragment newInstance(String movieId) {
+    public static TmdbMovieDetailsFragment newInstance(int movieId) {
         TmdbMovieDetailsFragment pageFragment = new TmdbMovieDetailsFragment();
         Bundle bundle = new Bundle();
-        bundle.putString("movieId", movieId);
+        bundle.putInt("movieId", movieId);
         pageFragment.setArguments(bundle);
         return pageFragment;
     }
@@ -110,7 +110,7 @@ public class TmdbMovieDetailsFragment extends Fragment {
 
         // Get the database ID of the movie in question
         mMovie = new Movie();
-        mMovie.setId(getArguments().getString("movieId"));
+        mMovie.setId(getArguments().getInt("movieId"));
 
         mPicasso = MizuuApplication.getPicasso(getActivity());
     }
@@ -200,7 +200,7 @@ public class TmdbMovieDetailsFragment extends Fragment {
             mMovie = mMovieApiService.getCompleteMovie(mMovie.getId(), "en");
 
             for (int i = 0; i < mMovie.getSimilarMovies().size(); i++) {
-                String id = mMovie.getSimilarMovies().get(i).getId();
+                int id = mMovie.getSimilarMovies().get(i).getId();
                 mMovie.getSimilarMovies().get(i).setInLibrary(MizuuApplication.getMovieAdapter().movieExists(id));
             }
 

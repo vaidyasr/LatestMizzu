@@ -52,7 +52,7 @@ public class Trakt {
 		return key;
 	}
 	
-	public static boolean performMovieCheckin(String tmdbId, Context c) {
+	public static boolean performMovieCheckin(int tmdbId, Context c) {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(c);
 		String username = settings.getString(TRAKT_USERNAME, "").trim();
 		String password = settings.getString(TRAKT_PASSWORD, "");

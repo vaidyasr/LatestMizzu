@@ -237,12 +237,12 @@ public class MovieLoader {
         // one by one. This is a hacky approach that gets all filepaths at once and creates a
         // map of them. That way it's easy to get filepaths for a specific movie - and it's
         // 2-3x faster with ~750 movies.
-        ArrayListMultimap<String, String> filepaths = ArrayListMultimap.create();
+        ArrayListMultimap<Integer, String> filepaths = ArrayListMultimap.create();
         Cursor paths = MizuuApplication.getMovieMappingAdapter().getAllFilepaths(false);
         if (paths != null) {
             try {
                 while (paths.moveToNext()) {
-                    filepaths.put(paths.getString(paths.getColumnIndex(DbAdapterMovieMappings.KEY_TMDB_ID)),
+                    filepaths.put(paths.getInt(paths.getColumnIndex(DbAdapterMovieMappings.KEY_TMDB_ID)),
                             paths.getString(paths.getColumnIndex(DbAdapterMovieMappings.KEY_FILEPATH)));
                 }
             } catch (Exception e) {} finally {
@@ -261,14 +261,14 @@ public class MovieLoader {
                 while (cursor.moveToNext()) {
                     list.add(new MediumMovie(mContext,
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TITLE)),
-                            cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TMDB_ID)),
+                            cursor.getInt(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TMDB_ID)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_RATING)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_RELEASEDATE)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_GENRES)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_FAVOURITE)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_ACTORS)),
                             collectionsMap.get(cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID))),
-                            cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID)),
+                            cursor.getInt(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_COLLECTION_ID)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_TO_WATCH)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_HAS_WATCHED)),
                             cursor.getString(cache.getColumnIndex(cursor, DbAdapterMovies.KEY_DATE_ADDED)),

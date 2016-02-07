@@ -68,10 +68,10 @@ public class CollectionCoverSearchFragment extends Fragment {
 	 */
 	public CollectionCoverSearchFragment() {}
 
-	public static CollectionCoverSearchFragment newInstance(String collectionId, String json, String baseUrl) {
+	public static CollectionCoverSearchFragment newInstance(int collectionId, String json, String baseUrl) {
 		CollectionCoverSearchFragment pageFragment = new CollectionCoverSearchFragment();
 		Bundle b = new Bundle();
-		b.putString("collectionId", collectionId);
+		b.putInt("collectionId", collectionId);
 		b.putString("json", json);
 		b.putString("baseUrl", baseUrl);
 		pageFragment.setArguments(b);

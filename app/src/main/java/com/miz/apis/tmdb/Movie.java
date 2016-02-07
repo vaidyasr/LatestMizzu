@@ -16,8 +16,6 @@
 
 package com.miz.apis.tmdb;
 
-import android.text.TextUtils;
-
 import com.miz.db.DbAdapterMovies;
 import com.miz.functions.Actor;
 import com.miz.functions.WebMovie;
@@ -27,24 +25,25 @@ import java.util.List;
 
 public class Movie {
 	
-	private String id = "", title = "", originalTitle = "", plot = "", cover = "", backdrop = "", rating = "0.0", tagline = "", releasedate = "", imdbId = "",
-			certification = "", runtime = "0", trailer = "", genres = "", cast = "", collectionTitle = "", collectionId = "", collectionImage = "", year = "";
-	
-	private List<Actor> mActors = new ArrayList<Actor>();
-	private List<WebMovie> mSimilarMovies = new ArrayList<WebMovie>();
+	private String title = "", originalTitle = "", plot = "", cover = "", backdrop = "",
+			rating = "0.0", tagline = "", releasedate = "", imdbId = "", certification = "",
+			runtime = "0", trailer = "", genres = "", cast = "", collectionTitle = "",
+			collectionImage = "", year = "";
+	private int id, collectionId;
+
+	private List<Actor> mActors = new ArrayList<>();
+	private List<WebMovie> mSimilarMovies = new ArrayList<>();
 
     public Movie() {
         // Unidentified by default
         setId(DbAdapterMovies.UNIDENTIFIED_ID);
     }
 
-	public String getId() {
-		if (TextUtils.isEmpty(id))
-			return title;
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 
@@ -160,11 +159,11 @@ public class Movie {
 		this.collectionTitle = collectionTitle;
 	}
 
-	public String getCollectionId() {
+	public int getCollectionId() {
 		return collectionId;
 	}
 
-	public void setCollectionId(String collectionId) {
+	public void setCollectionId(int collectionId) {
 		this.collectionId = collectionId;
 	}
 

@@ -52,9 +52,9 @@ public class MovieIdentification {
     private final TmdbConfiguration mTmdbConfiguration;
 
     private SparseBooleanArray mImdbMap = new SparseBooleanArray();
-    private String mCurrentMovieId = null, mLocale = null;
+    private String mLocale = null;
     private boolean mCancel = false;
-    private int mMovieId = 0, mCount = 0;
+    private int mCurrentMovieId, mMovieId = 0, mCount = 0;
 
     public MovieIdentification(Context context, MovieLibraryUpdateCallback callback, ArrayList<MovieStructure> files, TmdbConfiguration tmdbConfiguration) {
         mContext = context;
@@ -82,9 +82,10 @@ public class MovieIdentification {
         mMovieId = movieId;
     }
 
-    public void setCurrentMovieId(String oldMovieId) {
-        if (!TextUtils.isEmpty(oldMovieId))
+    public void setCurrentMovieId(int oldMovieId) {
+        if (oldMovieId != DbAdapterMovies.UNIDENTIFIED_ID) {
             mCurrentMovieId = oldMovieId;
+        }
     }
 
     private boolean overrideMovieId() {
@@ -95,7 +96,7 @@ public class MovieIdentification {
         return mMovieId;
     }
 
-    private String getCurrentMovieId() {
+    private int getCurrentMovieId() {
         return mCurrentMovieId;
     }
 
@@ -219,9 +220,9 @@ public class MovieIdentification {
     private void createMovie(MovieStructure ms, TmdbMovie movie) {
         boolean downloadCovers = true;
 
-        if (movie.getId() != DbAdapterMovies.NEW_UNIDENTIFIED_ID) {
+        if (movie.getId() != DbAdapterMovies.UNIDENTIFIED_ID) {
             // We only want to download covers if the movie doesn't already exist
-            downloadCovers = !MizuuApplication.getMovieAdapter().movieExists(String.valueOf(movie.getId()));
+            downloadCovers = !MizuuApplication.getMovieAdapter().movieExists(movie.getId());
         }
 
         if (downloadCovers) {
@@ -229,14 +230,14 @@ public class MovieIdentification {
             if (!TextUtils.isEmpty(movie.getPoster())) {
                 String posterUrl = mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster();
                 MizLib.downloadFile(posterUrl,
-                        FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId())), true);
+                        FileUtils.getMovieThumb(mContext, movie.getId()), true);
             }
 
             // Download the backdrop image and try again if it fails
             if (!TextUtils.isEmpty(movie.getBackdrop())) {
                 String backdropUrl = mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop();
                 MizLib.downloadFile(backdropUrl,
-                        FileUtils.getMovieBackdrop(mContext, String.valueOf(movie.getId())), true);
+                        FileUtils.getMovieBackdrop(mContext, movie.getId()), true);
             }
 
             // Download the collection image
@@ -245,7 +246,7 @@ public class MovieIdentification {
                 String collectionUrl = mTmdbConfiguration.getImages().getPosterUrl() +
                         movie.getCollection().getPosterPath();
                 MizLib.downloadFile(collectionUrl,
-                        FileUtils.getMovieThumb(mContext, String.valueOf(movie.getCollection().getId())), true);
+                        FileUtils.getMovieThumb(mContext, movie.getCollection().getId()), true);
             }
         }
 
@@ -269,7 +270,7 @@ public class MovieIdentification {
                 // Update the ID currently used to map the filepath to the movie
                 dbHelperMovieMapping.updateTmdbId(ms.getFilepath(), getCurrentMovieId(), String.valueOf(getMovieId()));
             } else {
-                if (TextUtils.isEmpty(getCurrentMovieId())) {
+                if (getCurrentMovieId() == DbAdapterMovies.UNIDENTIFIED_ID) {
                     // We're dealing with an unidentified movie, so we update
                     // the mapped TMDb ID of the filepath to the new one
                     dbHelperMovieMapping.updateTmdbId(ms.getFilepath(), String.valueOf(getMovieId()));
@@ -295,7 +296,7 @@ public class MovieIdentification {
         }
 
         // Finally, create or update the movie
-        dbHelper.createOrUpdateMovie(String.valueOf(movie.getId()), movie.getTitle(), movie.getOverview(),
+        dbHelper.createOrUpdateMovie(movie.getId(), movie.getTitle(), movie.getOverview(),
                 movie.getImdbId(), String.valueOf(movie.getVoteAverage()), movie.getTagline(), movie.getReleaseDate(),
                 "", String.valueOf(movie.getRuntime()), "", "", "0",
                 "", movie.getCollection() == null ? "" : movie.getCollection().getName(),
@@ -306,15 +307,15 @@ public class MovieIdentification {
     }
 
     private void updateNotification(TmdbMovie movie) {
-        File backdropFile = FileUtils.getMovieBackdrop(mContext, String.valueOf(movie.getId()));
+        File backdropFile = FileUtils.getMovieBackdrop(mContext, movie.getId());
         if (!backdropFile.exists())
-            backdropFile = FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId()));
+            backdropFile = FileUtils.getMovieThumb(mContext, movie.getId());
 
         if (mCallback != null) {
             try {
                 mCallback.onMovieAdded(movie.getTitle(),
                         mPicasso
-                                .load(FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId())))
+                                .load(FileUtils.getMovieThumb(mContext, movie.getId()))
                                 .resize(getNotificationImageSizeSmall(), (int) (getNotificationImageSizeSmall() * 1.5))
                                 .get(),
                         mPicasso

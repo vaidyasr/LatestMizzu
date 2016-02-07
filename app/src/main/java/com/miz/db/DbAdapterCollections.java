@@ -48,7 +48,7 @@ public class DbAdapterCollections extends AbstractDbAdapter {
      * @param collection
      * @return
      */
-	public long createCollection(String tmdbId, String collectionId, String collection) {
+	public long createCollection(int tmdbId, String collectionId, String collection) {
         DbAdapterMovies db = MizuuApplication.getMovieAdapter();
 
 		// We don't want to create it again if it already exists

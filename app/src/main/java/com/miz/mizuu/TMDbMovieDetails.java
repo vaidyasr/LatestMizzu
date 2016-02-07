@@ -27,7 +27,7 @@ import com.miz.utils.ViewUtils;
 public class TMDbMovieDetails extends MizActivity {
 
     private static String TAG = "TmdbMovieDetailsFragment";
-    private String mMovieId;
+    private int mMovieId;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -40,7 +40,7 @@ public class TMDbMovieDetails extends MizActivity {
 
         setTitle(null);
 
-        mMovieId = getIntent().getExtras().getString("tmdbId");
+        mMovieId = getIntent().getExtras().getInt("tmdbId");
 
         Fragment frag = getSupportFragmentManager().findFragmentByTag(TAG);
         if (frag == null) {

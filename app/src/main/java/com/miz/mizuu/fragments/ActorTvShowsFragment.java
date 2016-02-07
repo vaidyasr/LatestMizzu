@@ -259,9 +259,9 @@ public class ActorTvShowsFragment extends Fragment {
 			mActor = TMDbMovieService.getInstance(mContext).getCompleteActorDetails(mActorId);
 
 			for (int i = 0; i < mActor.getTvShows().size(); i++) {
-				String id = mActor.getTvShows().get(i).getId();
+				int id = mActor.getTvShows().get(i).getId();
 				String title = mActor.getTvShows().get(i).getTitle();
-				mActor.getTvShows().get(i).setInLibrary(MizuuApplication.getTvDbAdapter().showExists(id, title));
+				mActor.getTvShows().get(i).setInLibrary(MizuuApplication.getTvDbAdapter().showExists(String.valueOf(id), title));
 			}
 
 			return null;

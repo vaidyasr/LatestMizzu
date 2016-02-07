@@ -231,7 +231,7 @@ public class ActorBrowserTvFragment extends Fragment {
 		protected String doInBackground(String... params) {
 			try {
 				TMDbTvShowService service = TMDbTvShowService.getInstance(mContext);
-				mActors = service.getActors(mId);
+				mActors = service.getActors(Integer.valueOf(mId));
 				
 				mLoaded = true;
 			} catch (Exception e) {} // If the fragment is no longer attached to the Activity

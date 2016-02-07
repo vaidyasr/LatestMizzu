@@ -31,28 +31,28 @@ public abstract class MovieApiService extends ApiService<Movie> {
 	 * @param language Two-letter ISO 639-1 language code. Can be {@link null}.
 	 * @return Content object based on the supplied ID.
 	 */
-	public abstract Movie get(String id, String json, String language);
+	public abstract Movie get(int id, String json, String language);
 	
 	/**
 	 * Get a {@link List} of URL's to cover images.
 	 * @param id Movie ID.
 	 * @return {@link List} containing cover image paths
 	 */
-	public abstract List<String> getCovers(String id);
+	public abstract List<String> getCovers(int id);
 	
 	/**
 	 * Get a {@link List} of URL's to backdrop images.
 	 * @param id Movie ID.
 	 * @return {@link List} containing backdrop image paths
 	 */
-	public abstract List<String> getBackdrops(String id);
+	public abstract List<String> getBackdrops(int id);
 	
 	/**
 	 * Get a {@link List} of similar content for a given movie ID.
 	 * @param id Movie ID.
 	 * @return {@link List} of similar content.
 	 */
-	public abstract List<WebMovie> getSimilarMovies(String id);
+	public abstract List<WebMovie> getSimilarMovies(int id);
 	
 	/**
 	 * Get the language code or a default one if
