@@ -278,20 +278,17 @@ public class TvShowIdentification {
 
         if (downloadCovers) {
             if (!TextUtils.isEmpty(thisShow.getId()) && !thisShow.getId().equals(DbAdapterTvShows.UNIDENTIFIED_ID)) {
-                String thumb_filepath = FileUtils.getTvShowThumb(mContext, thisShow.getId()).getAbsolutePath();
-                String backdrop_filepath = FileUtils.getTvShowBackdrop(mContext, thisShow.getId()).getAbsolutePath();
-
                 // Download the cover file and try again if it fails
-                if (!TextUtils.isEmpty(thisShow.getCoverUrl()))
-                    if (!MizLib.downloadFile(thisShow.getCoverUrl(), thumb_filepath))
-                        MizLib.downloadFile(thisShow.getCoverUrl(), thumb_filepath);
-
-                MizLib.resizeBitmapFileToCoverSize(mContext, thumb_filepath);
+                if (!TextUtils.isEmpty(thisShow.getCoverUrl())) {
+                    MizLib.downloadFile(thisShow.getCoverUrl(),
+                            FileUtils.getTvShowThumb(mContext, thisShow.getId()), true);
+                }
 
                 // Download the backdrop image file and try again if it fails
-                if (!TextUtils.isEmpty(thisShow.getBackdropUrl()))
-                    if (!MizLib.downloadFile(thisShow.getBackdropUrl(), backdrop_filepath))
-                        MizLib.downloadFile(thisShow.getBackdropUrl(), backdrop_filepath);
+                if (!TextUtils.isEmpty(thisShow.getBackdropUrl())) {
+                    MizLib.downloadFile(thisShow.getBackdropUrl(),
+                            FileUtils.getTvShowBackdrop(mContext, thisShow.getId()), true);
+                }
 
                 DbAdapterTvShows dbHelper = MizuuApplication.getTvDbAdapter();
                 dbHelper.createShow(thisShow.getId(), thisShow.getTitle(), thisShow.getDescription(), thisShow.getActors(), thisShow.getGenres(),
@@ -324,17 +321,16 @@ public class TvShowIdentification {
 
         // Download the episode screenshot file and try again if it fails
         if (!TextUtils.isEmpty(thisEpisode.getScreenshotUrl())) {
-            String screenshotFile = FileUtils.getTvShowEpisode(mContext, thisShow.getId(), season, episode).getAbsolutePath();
-            if (!MizLib.downloadFile(thisEpisode.getScreenshotUrl(), screenshotFile))
-                MizLib.downloadFile(thisEpisode.getScreenshotUrl(), screenshotFile);
+            MizLib.downloadFile(thisEpisode.getScreenshotUrl(),
+                    FileUtils.getTvShowEpisode(mContext, thisShow.getId(), season, episode), true);
         }
 
         // Download season cover if it hasn't already been downloaded
         if (thisShow.hasSeason(thisEpisode.getSeason())) {
             File seasonFile = FileUtils.getTvShowSeason(mContext, thisShow.getId(), season);
             if (!seasonFile.exists()) {
-                if (!MizLib.downloadFile(thisShow.getSeason(thisEpisode.getSeason()).getCoverPath(), seasonFile.getAbsolutePath()))
-                    MizLib.downloadFile(thisShow.getSeason(thisEpisode.getSeason()).getCoverPath(), seasonFile.getAbsolutePath());
+                MizLib.downloadFile(thisShow.getSeason(thisEpisode.getSeason()).getCoverPath(),
+                        seasonFile, true);
             }
         }
 

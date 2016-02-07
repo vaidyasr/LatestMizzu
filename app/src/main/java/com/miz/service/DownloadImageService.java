@@ -166,7 +166,7 @@ public class DownloadImageService extends IntentService {
 		new File(mDownloadPath).delete();
 		
 		// Download the new file
-		MizLib.downloadFile(mImageUrl, mDownloadPath);
+		MizLib.downloadFile(mImageUrl, new File(mDownloadPath), false);
 	}
 
 	private void resize() {
