@@ -33,7 +33,9 @@ public class TmdbApi {
             interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(interceptor)
-                    .addInterceptor(new ThrottlingInterceptor()).build();
+                    .addInterceptor(new ThrottlingInterceptor())
+                    .addInterceptor(new ErrorInterceptor())
+                    .build();
 
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(API_URL)
@@ -47,6 +49,48 @@ public class TmdbApi {
         return sInstance;
     }
 
+    /**
+     * An OkHttp Interceptor that handles server errors from TMDb and
+     * attempts to retry any failed requests after waiting 5 seconds.
+     */
+    private static class ErrorInterceptor implements Interceptor {
+
+        private final Lock requestLock = new ReentrantLock();
+
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+
+            final Request request = chain.request();
+            Response response = chain.proceed(request);
+
+            // If the response code is 500 or more, it's a server error and we'll have to try again
+            if (response.code() >= 500) {
+                requestLock.lock();
+
+                try {
+                    // Sleep 5 seconds before retrying
+                    Thread.sleep(5000);
+                }
+                catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    requestLock.unlock();
+
+                    // Re-send the request after waiting
+                    response = chain.proceed(request);
+                }
+            }
+
+            return response;
+        }
+
+    }
+
+    /**
+     * An OkHttp Interceptor to handle TMDb's API request rate limit,
+     * currently of 40 requests per 10 seconds. If we hit the rate limit,
+     * we wait until it has been reset and try again.
+     */
     private static class ThrottlingInterceptor implements Interceptor {
 
         private final Lock requestLock = new ReentrantLock();
