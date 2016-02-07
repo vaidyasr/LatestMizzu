@@ -34,6 +34,9 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.miz.abstractclasses.MovieFileSource;
+import com.miz.apis.tmdb.TmdbApi;
+import com.miz.apis.tmdb.TmdbApiService;
+import com.miz.apis.tmdb.models.TmdbConfiguration;
 import com.miz.apis.trakt.Trakt;
 import com.miz.db.DbAdapterSources;
 import com.miz.filesources.FileMovie;
@@ -52,6 +55,7 @@ import com.miz.mizuu.R;
 import com.miz.utils.LocalBroadcastUtils;
 import com.miz.utils.MovieDatabaseUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +68,7 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
 	public static final String STOP_MOVIE_LIBRARY_UPDATE = "mizuu-stop-movie-library-update";
 	private ArrayList<FileSource> mFileSources;
 	private ArrayList<MovieFileSource<?>> mMovieFileSources;
-	private ArrayList<MovieStructure> mMovieQueue = new ArrayList<MovieStructure>();
+	private ArrayList<MovieStructure> mMovieQueue = new ArrayList<>();
 	private boolean mClearLibrary, mClearUnavailable, mSyncLibraries, mStopUpdate;
 	private int mTotalFiles, mCount;
 	private SharedPreferences mSettings;
@@ -199,7 +203,7 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
 	}
 
 	private void loadFileSources() {
-		mFileSources = new ArrayList<FileSource>();
+		mFileSources = new ArrayList<>();
 		DbAdapterSources dbHelperSources = MizuuApplication.getSourcesAdapter();
 		Cursor c = dbHelperSources.fetchAllMovieSources();
 		try {
@@ -323,15 +327,23 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
 	};
 
 	private void updateMovies() {
-		mMovieIdentification = new MovieIdentification(getApplicationContext(), this, mMovieQueue);
-		mMovieIdentification.start();
+		TmdbApiService service = TmdbApi.getInstance();
+		try {
+			TmdbConfiguration config = service.getConfiguration(MizLib.getTmdbApiKey(this)).execute().body();
+            MizLib.setTmdbImageBaseUrl(this, config.getImages().getBaseUrl());
+
+            mMovieIdentification = new MovieIdentification(getApplicationContext(), this, mMovieQueue, config);
+            mMovieIdentification.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void clear() {
 		// Lists
-		mFileSources = new ArrayList<FileSource>();
-		mMovieFileSources = new ArrayList<MovieFileSource<?>>();
-		mMovieQueue = new ArrayList<MovieStructure>();
+		mFileSources = new ArrayList<>();
+		mMovieFileSources = new ArrayList<>();
+		mMovieQueue = new ArrayList<>();
 
 		// Booleans
 		mClearLibrary = false;

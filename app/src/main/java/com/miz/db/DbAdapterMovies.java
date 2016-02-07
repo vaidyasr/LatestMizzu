@@ -51,6 +51,7 @@ public class DbAdapterMovies extends AbstractDbAdapter {
     public static final String DATABASE_TABLE = "movie";
 
     public static final String UNIDENTIFIED_ID = "invalid";
+    public static final int NEW_UNIDENTIFIED_ID = -1;
 
     public static final String[] SELECT_ALL = new String[] {KEY_TMDB_ID, KEY_TITLE, KEY_PLOT, KEY_IMDB_ID, KEY_RATING, KEY_TAGLINE, KEY_RELEASEDATE, KEY_CERTIFICATION,
             KEY_RUNTIME, KEY_TRAILER, KEY_GENRES, KEY_FAVOURITE, KEY_ACTORS, KEY_COLLECTION_ID, KEY_TO_WATCH, KEY_HAS_WATCHED, KEY_DATE_ADDED};

@@ -21,8 +21,11 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.SparseBooleanArray;
 
-import com.miz.abstractclasses.MovieApiService;
-import com.miz.apis.tmdb.Movie;
+import com.miz.apis.tmdb.TmdbApi;
+import com.miz.apis.tmdb.TmdbApiService;
+import com.miz.apis.tmdb.models.TmdbConfiguration;
+import com.miz.apis.tmdb.models.TmdbMovie;
+import com.miz.apis.tmdb.models.TmdbMovieResult;
 import com.miz.db.DbAdapterMovieMappings;
 import com.miz.db.DbAdapterMovies;
 import com.miz.functions.MizLib;
@@ -34,6 +37,7 @@ import com.miz.utils.MovieDatabaseUtils;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,16 +49,18 @@ public class MovieIdentification {
     private final MovieLibraryUpdateCallback mCallback;
     private final Context mContext;
     private final ArrayList<MovieStructure> mMovieStructures;
+    private final TmdbConfiguration mTmdbConfiguration;
 
     private SparseBooleanArray mImdbMap = new SparseBooleanArray();
-    private String mMovieId = null, mCurrentMovieId = null, mLocale = null;
+    private String mCurrentMovieId = null, mLocale = null;
     private boolean mCancel = false;
-    private int mCount = 0;
+    private int mMovieId = 0, mCount = 0;
 
-    public MovieIdentification(Context context, MovieLibraryUpdateCallback callback, ArrayList<MovieStructure> files) {
+    public MovieIdentification(Context context, MovieLibraryUpdateCallback callback, ArrayList<MovieStructure> files, TmdbConfiguration tmdbConfiguration) {
         mContext = context;
         mCallback = callback;
-        mMovieStructures = new ArrayList<MovieStructure>(files);
+        mMovieStructures = new ArrayList<>(files);
+        mTmdbConfiguration = tmdbConfiguration;
 
         mPicasso = Picasso.with(mContext);
 
@@ -72,7 +78,7 @@ public class MovieIdentification {
      * provided movie ID.
      * @param movieId
      */
-    public void setMovieId(String movieId) {
+    public void setMovieId(int movieId) {
         mMovieId = movieId;
     }
 
@@ -82,10 +88,10 @@ public class MovieIdentification {
     }
 
     private boolean overrideMovieId() {
-        return null != getMovieId();
+        return getMovieId() > 0;
     }
 
-    private String getMovieId() {
+    private int getMovieId() {
         return mMovieId;
     }
 
@@ -117,7 +123,8 @@ public class MovieIdentification {
             mImdbMap.put(i, ms.hasImdbId());
         }
 
-        MovieApiService service = MizuuApplication.getMovieService(mContext);
+        String apiKey = MizLib.getTmdbApiKey(mContext);
+        TmdbApiService service = TmdbApi.getInstance();
 
         for (MovieStructure ms : mMovieStructures) {
             if (mCancel)
@@ -125,88 +132,118 @@ public class MovieIdentification {
 
             mCount++;
 
-            Movie movie = null;
-            List<Movie> results = new ArrayList<Movie>();
+            TmdbMovie movie = null;
+            List<TmdbMovieResult> results = new ArrayList<>();
 
             if (!overrideMovieId()) {
                 // Check if there's an IMDb ID and attempt to search based on it
                 if (ms.hasImdbId()) {
-                    results = service.searchByImdbId(ms.getImdbId(), null);
+                    try {
+                        results = service.find(apiKey, ms.getImdbId(), "imdb_id", null).execute()
+                                .body().getMovieResults();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 // If there's no results, attempt to search based on the movie file name and year
                 if (results.size() == 0) {
                     int year = ms.getReleaseYear();
-                    if (year >= 0)
-                        results = service.search(ms.getDecryptedFilename(), String.valueOf(year), null);
+                    if (year >= 0) {
+                        try {
+                            results = service.search(apiKey, ms.getDecryptedFilename(), null,
+                                    null, null, year, null).execute().body().getResults();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 // If there's still no results, attempt to search based on the movie file name without year
-                if (results.size() == 0)
-                    results = service.search(ms.getDecryptedFilename(), null);
+                if (results.size() == 0) {
+                    try {
+                        results = service.search(apiKey, ms.getDecryptedFilename(), null,
+                                null, null, null, null).execute().body().getResults();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 // If there's still no results, attempt to search based on the parent folder name and year
                 if (results.size() == 0) {
                     int year = ms.getReleaseYear();
-                    if (year >= 0)
-                        results = service.search(ms.getDecryptedParentFolderName(), String.valueOf(year), null);
+                    if (year >= 0) {
+                        try {
+                            results = service.search(apiKey, ms.getDecryptedParentFolderName(), null,
+                                    null, null, year, null).execute().body().getResults();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 // If there's still no results, search based on the parent folder name only
-                if (results.size() == 0)
-                    results = service.search(ms.getDecryptedParentFolderName(), null);
+                if (results.size() == 0) {
+                    try {
+                        results = service.search(apiKey, ms.getDecryptedParentFolderName(), null,
+                                null, null, null, null).execute().body().getResults();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             } else {
-                movie = service.get(getMovieId(), mLocale);
+                try {
+                    movie = service.getMovie(getMovieId(), apiKey, mLocale, null).execute().body();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             if (!overrideMovieId() && results.size() > 0) {
                 // Automatic library update
-                movie = service.get(results.get(0).getId(), mLocale);
+                try {
+                    movie = service.getMovie(results.get(0).getId(), apiKey, mLocale, null).execute().body();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
             // Last check - is movie still null?
             if (movie == null)
-                movie = new Movie();
+                movie = new TmdbMovie();
 
             createMovie(ms, movie);
         }
     }
 
-    private void createMovie(MovieStructure ms, Movie movie) {
+    private void createMovie(MovieStructure ms, TmdbMovie movie) {
         boolean downloadCovers = true;
 
-        if (!movie.getId().equals(DbAdapterMovies.UNIDENTIFIED_ID) && !TextUtils.isEmpty(movie.getId()))
+        if (movie.getId() != DbAdapterMovies.NEW_UNIDENTIFIED_ID) {
             // We only want to download covers if the movie doesn't already exist
-            downloadCovers = !MizuuApplication.getMovieAdapter().movieExists(movie.getId());
+            downloadCovers = !MizuuApplication.getMovieAdapter().movieExists(String.valueOf(movie.getId()));
+        }
 
         if (downloadCovers) {
-            String thumb_filepath = FileUtils.getMovieThumb(mContext, movie.getId()).getAbsolutePath();
+            String thumb_filepath = FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId())).getAbsolutePath();
 
             // Download the cover image and try again if it fails
-            if (!MizLib.downloadFile(movie.getCover(), thumb_filepath))
-                MizLib.downloadFile(movie.getCover(), thumb_filepath);
+            if (!MizLib.downloadFile(mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster(), thumb_filepath))
+                MizLib.downloadFile(mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster(), thumb_filepath);
 
             // Download the backdrop image and try again if it fails
-            if (!TextUtils.isEmpty(movie.getBackdrop())) {
-                String backdropFile = FileUtils.getMovieBackdrop(mContext, movie.getId()).getAbsolutePath();
+            if (!TextUtils.isEmpty(mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop())) {
+                String backdropFile = FileUtils.getMovieBackdrop(mContext, String.valueOf(movie.getId())).getAbsolutePath();
 
-                if (!MizLib.downloadFile(movie.getBackdrop(), backdropFile))
-                    MizLib.downloadFile(movie.getBackdrop(), backdropFile);
-            }
-
-            // Download the collection image
-            if (!TextUtils.isEmpty(movie.getCollectionImage())) {
-                String collectionImage = FileUtils.getMovieThumb(mContext, movie.getCollectionId()).getAbsolutePath();
-
-                if (!MizLib.downloadFile(movie.getCollectionImage(), collectionImage))
-                    MizLib.downloadFile(movie.getCollectionImage(), collectionImage);
+                if (!MizLib.downloadFile(mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop(), backdropFile))
+                    MizLib.downloadFile(mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop(), backdropFile);
             }
         }
 
         addToDatabase(ms, movie);
     }
 
-    private void addToDatabase(MovieStructure ms, Movie movie) {
+    private void addToDatabase(MovieStructure ms, TmdbMovie movie) {
         DbAdapterMovieMappings dbHelperMovieMapping = MizuuApplication.getMovieMappingAdapter();
         DbAdapterMovies dbHelper = MizuuApplication.getMovieAdapter();
 
@@ -221,12 +258,12 @@ public class MovieIdentification {
                 // to remove the movie entry nor any images, etc.
 
                 // Update the ID currently used to map the filepath to the movie
-                dbHelperMovieMapping.updateTmdbId(ms.getFilepath(), getCurrentMovieId(), getMovieId());
+                dbHelperMovieMapping.updateTmdbId(ms.getFilepath(), getCurrentMovieId(), String.valueOf(getMovieId()));
             } else {
                 if (TextUtils.isEmpty(getCurrentMovieId())) {
                     // We're dealing with an unidentified movie, so we update
                     // the mapped TMDb ID of the filepath to the new one
-                    dbHelperMovieMapping.updateTmdbId(ms.getFilepath(), getMovieId());
+                    dbHelperMovieMapping.updateTmdbId(ms.getFilepath(), String.valueOf(getMovieId()));
                 } else {
                     // This movie only has one filepath mapping, i.e. the one we're
                     // currently re-assigning. It's safe to delete all movie data and
@@ -236,7 +273,7 @@ public class MovieIdentification {
                     MovieDatabaseUtils.deleteMovie(mContext, getCurrentMovieId());
 
                     // Create the new filepath mapping
-                    dbHelperMovieMapping.createFilepathMapping(ms.getFilepath(), getMovieId());
+                    dbHelperMovieMapping.createFilepathMapping(ms.getFilepath(), String.valueOf(getMovieId()));
                 }
             }
 
@@ -245,27 +282,38 @@ public class MovieIdentification {
 
             // Just create the filepath mapping - if the filepath / movie
             // combination already exists, it won't do anything
-            dbHelperMovieMapping.createFilepathMapping(ms.getFilepath(), movie.getId());
+            dbHelperMovieMapping.createFilepathMapping(ms.getFilepath(), String.valueOf(movie.getId()));
         }
 
         // Finally, create or update the movie
-        dbHelper.createOrUpdateMovie(movie.getId(), movie.getTitle(), movie.getPlot(), movie.getImdbId(), movie.getRating(), movie.getTagline(),
-                movie.getReleasedate(), movie.getCertification(), movie.getRuntime(), movie.getTrailer(), movie.getGenres(), "0",
-                movie.getCast(), movie.getCollectionTitle(), movie.getCollectionId(), "0", "0", String.valueOf(System.currentTimeMillis()));
+        dbHelper.createOrUpdateMovie(String.valueOf(movie.getId()), movie.getTitle(), movie.getOverview(),
+                movie.getImdbId(), String.valueOf(movie.getVoteAverage()), movie.getTagline(), movie.getReleaseDate(),
+                "", String.valueOf(movie.getRuntime()), "", "", "0",
+                "", movie.getCollection() == null ? "" : movie.getCollection().getName(),
+                movie.getCollection() == null ? "" : String.valueOf(movie.getCollection().getId()),
+                "0", "0", String.valueOf(System.currentTimeMillis()));
 
         updateNotification(movie);
     }
 
-    private void updateNotification(Movie movie) {
-        File backdropFile = FileUtils.getMovieBackdrop(mContext, movie.getId());
+    private void updateNotification(TmdbMovie movie) {
+        File backdropFile = FileUtils.getMovieBackdrop(mContext, String.valueOf(movie.getId()));
         if (!backdropFile.exists())
-            backdropFile = FileUtils.getMovieThumb(mContext, movie.getId());
+            backdropFile = FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId()));
 
         if (mCallback != null) {
             try {
                 mCallback.onMovieAdded(movie.getTitle(),
-                        mPicasso.load(FileUtils.getMovieThumb(mContext, movie.getId())).resize(getNotificationImageSizeSmall(), (int) (getNotificationImageSizeSmall() * 1.5)).get(),
-                        mPicasso.load(backdropFile).resize(getNotificationImageWidth(), getNotificationImageHeight()).skipMemoryCache().get(), mCount);
+                        mPicasso
+                                .load(FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId())))
+                                .resize(getNotificationImageSizeSmall(), (int) (getNotificationImageSizeSmall() * 1.5))
+                                .get(),
+                        mPicasso
+                                .load(backdropFile)
+                                .resize(getNotificationImageWidth(), getNotificationImageHeight())
+                                .skipMemoryCache()
+                                .get(),
+                        mCount);
             } catch (Exception e) {
                 mCallback.onMovieAdded(movie.getTitle(), null, null, mCount);
             }

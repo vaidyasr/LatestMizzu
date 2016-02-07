@@ -29,6 +29,9 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.miz.apis.tmdb.TmdbApi;
+import com.miz.apis.tmdb.TmdbApiService;
+import com.miz.apis.tmdb.models.TmdbConfiguration;
 import com.miz.functions.MizLib;
 import com.miz.functions.MovieLibraryUpdateCallback;
 import com.miz.identification.MovieIdentification;
@@ -36,13 +39,14 @@ import com.miz.identification.MovieStructure;
 import com.miz.mizuu.R;
 import com.miz.utils.LocalBroadcastUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class IdentifyMovieService extends IntentService implements MovieLibraryUpdateCallback {
 
 	private boolean mDebugging = true;
 	private String mMovieId, mOldMovieId, mLanguage, mFilepath;
-	private ArrayList<MovieStructure> mFiles = new ArrayList<MovieStructure>();
+	private ArrayList<MovieStructure> mFiles = new ArrayList<>();
 	private final int NOTIFICATION_ID = 4500;
 	private NotificationManager mNotificationManager;
 	private NotificationCompat.Builder mBuilder;
@@ -61,7 +65,7 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 			mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
 		mNotificationManager.cancel(NOTIFICATION_ID);
-		
+
 		LocalBroadcastUtils.updateMovieLibrary(this);
 	}
 
@@ -70,16 +74,16 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 
 		if (MizLib.isMovieLibraryBeingUpdated(this)) {
 			Handler mHandler = new Handler(Looper.getMainLooper());
-			mHandler.post(new Runnable() {            
-		        @Override
-		        public void run() {
-		            Toast.makeText(IdentifyMovieService.this, R.string.cant_identify_while_updating, Toast.LENGTH_LONG).show();                
-		        }
-		    });
-			
+			mHandler.post(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(IdentifyMovieService.this, R.string.cant_identify_while_updating, Toast.LENGTH_LONG).show();
+				}
+			});
+
 			return;
 		}
-		
+
 		log("clear()");
 		clear();
 
@@ -91,8 +95,8 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 		mMovieId = b.getString("movieId");
 		mLanguage = b.getString("language", "en");
 		mFilepath = b.getString("filepath");
-        mOldMovieId = b.getString("currentMovieId");
-		
+		mOldMovieId = b.getString("currentMovieId");
+
 		log("setupList()");
 		setupList();
 
@@ -105,11 +109,18 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 	}
 
 	private void start() {
-		MovieIdentification identification = new MovieIdentification(this, this, mFiles);
-		identification.setMovieId(mMovieId);
-        identification.setCurrentMovieId(mOldMovieId);
-		identification.setLanguage(mLanguage);
-		identification.start();
+		TmdbApiService service = TmdbApi.getInstance();
+		try {
+			TmdbConfiguration config = service.getConfiguration(MizLib.getTmdbApiKey(this)).execute().body();
+			MizLib.setTmdbImageBaseUrl(this, config.getImages().getBaseUrl());
+			MovieIdentification identification = new MovieIdentification(this, this, mFiles, config);
+			identification.setMovieId(Integer.valueOf(mMovieId));
+			identification.setCurrentMovieId(mOldMovieId);
+			identification.setLanguage(mLanguage);
+			identification.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -119,13 +130,13 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 	private void clear() {
 		mMovieId = "";
 		mLanguage = "";
-		mFiles = new ArrayList<MovieStructure>();
+		mFiles = new ArrayList<>();
 	}
 
 	private void setup() {
 		// Setup up notification
 		mBuilder = new NotificationCompat.Builder(getApplicationContext());
-        mBuilder.setColor(getResources().getColor(R.color.color_primary));
+		mBuilder.setColor(getResources().getColor(R.color.color_primary));
 		mBuilder.setSmallIcon(R.drawable.ic_sync_white_24dp);
 		mBuilder.setTicker(getString(R.string.identifying_movie));
 		mBuilder.setContentTitle(getString(R.string.identifying_movie));
@@ -143,7 +154,7 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 		// Tell the system that this is an ongoing notification, so it shouldn't be killed
 		startForeground(NOTIFICATION_ID, updateNotification);
 	}
-	
+
 	@Override
 	public void onMovieAdded(String title, Bitmap cover, Bitmap backdrop, int count) {
 		// We're done!

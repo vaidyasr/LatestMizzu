@@ -23,7 +23,6 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -43,7 +42,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.Looper;
 import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.support.v8.renderscript.Allocation;
@@ -82,13 +80,9 @@ import com.squareup.okhttp.Response;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -109,12 +103,13 @@ import java.util.regex.Pattern;
 
 import jcifs.smb.SmbException;
 import jcifs.smb.SmbFile;
+import okio.BufferedSink;
+import okio.Okio;
 
 import static com.miz.functions.PreferenceKeys.INCLUDE_ADULT_CONTENT;
 import static com.miz.functions.PreferenceKeys.SCHEDULED_UPDATES_MOVIE;
 import static com.miz.functions.PreferenceKeys.SCHEDULED_UPDATES_TVSHOWS;
 import static com.miz.functions.PreferenceKeys.TMDB_BASE_URL;
-import static com.miz.functions.PreferenceKeys.TMDB_BASE_URL_TIME;
 import static com.miz.functions.PreferenceKeys.TRAKT_USERNAME;
 
 @SuppressLint("NewApi")
@@ -147,13 +142,6 @@ public class MizLib {
         String key = context.getString(R.string.tmdb_api_key);
         if (TextUtils.isEmpty(key) || key.equals("add_your_own"))
             throw new RuntimeException("You need to add a TMDb API key!");
-        return key;
-    }
-
-    public static String getTvdbApiKey(Context context) {
-        String key = context.getString(R.string.tvdb_api_key);
-        if (TextUtils.isEmpty(key) || key.equals("add_your_own"))
-            throw new RuntimeException("You need to add a TVDb API key!");
         return key;
     }
 
@@ -794,47 +782,29 @@ public class MizLib {
         if (TextUtils.isEmpty(url))
             return false;
 
-        InputStream in = null;
-        OutputStream fileos = null;
+        File downloadFile = new File(savePath);
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
+        okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
 
         try {
-            int bufferSize = 8192;
-            byte[] retVal = null;
+            okhttp3.Response response = client.newCall(request).execute();
 
-            Request request = new Request.Builder()
-                    .url(url)
-                    .build();
-
-            Response response = MizuuApplication.getOkHttpClient().newCall(request).execute();
-            if (!response.isSuccessful())
+            if (!response.isSuccessful()) {
+                response.body().close();
                 return false;
-
-            fileos = new BufferedOutputStream(new FileOutputStream(savePath));
-            in = new BufferedInputStream(response.body().byteStream(), bufferSize);
-
-            retVal = new byte[bufferSize];
-            int length = 0;
-            while((length = in.read(retVal)) > -1) {
-                fileos.write(retVal, 0, length);
             }
-        } catch(Exception e) {
+
+            BufferedSink sink = Okio.buffer(Okio.sink(downloadFile));
+            sink.writeAll(response.body().source());
+            sink.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
             // The download failed, so let's delete whatever was downloaded
-            deleteFile(new File(savePath));
+            deleteFile(downloadFile);
 
             return false;
-        } finally {
-            if (fileos != null) {
-                try {
-                    fileos.flush();
-                    fileos.close();
-                } catch (IOException e) {}
-            }
-
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {}
-            }
         }
 
         return true;
@@ -2004,29 +1974,12 @@ public class MizLib {
         }
     }
 
+    public static void setTmdbImageBaseUrl(Context context, String baseUrl) {
+        PreferenceManager.getDefaultSharedPreferences(context).edit().putString(TMDB_BASE_URL, baseUrl).apply();
+    }
+
     public static String getTmdbImageBaseUrl(Context context) {
-        long time = PreferenceManager.getDefaultSharedPreferences(context).getLong(TMDB_BASE_URL_TIME, 0);
-        long currentTime = System.currentTimeMillis();
-
-        // We store the TMDb base URL for 24 hours
-        if (((currentTime - time) < DAY && PreferenceManager.getDefaultSharedPreferences(context).contains(TMDB_BASE_URL)) |
-                Looper.getMainLooper().getThread() == Thread.currentThread()) {
-            return PreferenceManager.getDefaultSharedPreferences(context).getString(TMDB_BASE_URL, "");
-        }
-
-        try {
-            JSONObject configuration = getJSONObject(context, "https://api.themoviedb.org/3/configuration?api_key=" + getTmdbApiKey(context));
-            String baseUrl = configuration.getJSONObject("images").getString("secure_base_url");
-
-            Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-            editor.putString(TMDB_BASE_URL, baseUrl);
-            editor.putLong(TMDB_BASE_URL_TIME, System.currentTimeMillis());
-            editor.commit();
-
-            return baseUrl;
-        } catch (JSONException e) {
-            return null;
-        }
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(TMDB_BASE_URL, "");
     }
 
     public static void showSelectFileDialog(Context context, ArrayList<Filepath> paths, final Dialog.OnClickListener listener) {
