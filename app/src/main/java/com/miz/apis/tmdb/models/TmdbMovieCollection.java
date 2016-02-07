@@ -16,4 +16,12 @@ public class TmdbMovieCollection {
         return id;
     }
 
+    public String getPosterPath() {
+        return poster_path;
+    }
+
+    public String getBackdropPath() {
+        return backdrop_path;
+    }
+
 }

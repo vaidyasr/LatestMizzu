@@ -778,11 +778,10 @@ public class MizLib {
         return originalBitmap;
     }
 
-    public static boolean downloadFile(String url, String savePath) {
+    public static boolean downloadFile(final String url, final File file, final boolean retry) {
         if (TextUtils.isEmpty(url))
             return false;
 
-        File downloadFile = new File(savePath);
         okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
 
@@ -791,10 +790,15 @@ public class MizLib {
 
             if (!response.isSuccessful()) {
                 response.body().close();
-                return false;
+
+                if (retry) {
+                    return downloadFile(url, file, false);
+                } else {
+                    return false;
+                }
             }
 
-            BufferedSink sink = Okio.buffer(Okio.sink(downloadFile));
+            BufferedSink sink = Okio.buffer(Okio.sink(file));
             sink.writeAll(response.body().source());
             sink.close();
 
@@ -802,9 +806,13 @@ public class MizLib {
             e.printStackTrace();
 
             // The download failed, so let's delete whatever was downloaded
-            deleteFile(downloadFile);
+            deleteFile(file);
 
-            return false;
+            if (retry) {
+                return downloadFile(url, file, false);
+            } else {
+                return false;
+            }
         }
 
         return true;

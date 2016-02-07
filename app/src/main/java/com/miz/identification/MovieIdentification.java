@@ -225,18 +225,27 @@ public class MovieIdentification {
         }
 
         if (downloadCovers) {
-            String thumb_filepath = FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId())).getAbsolutePath();
-
             // Download the cover image and try again if it fails
-            if (!MizLib.downloadFile(mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster(), thumb_filepath))
-                MizLib.downloadFile(mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster(), thumb_filepath);
+            if (!TextUtils.isEmpty(movie.getPoster())) {
+                String posterUrl = mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster();
+                MizLib.downloadFile(posterUrl,
+                        FileUtils.getMovieThumb(mContext, String.valueOf(movie.getId())), true);
+            }
 
             // Download the backdrop image and try again if it fails
-            if (!TextUtils.isEmpty(mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop())) {
-                String backdropFile = FileUtils.getMovieBackdrop(mContext, String.valueOf(movie.getId())).getAbsolutePath();
+            if (!TextUtils.isEmpty(movie.getBackdrop())) {
+                String backdropUrl = mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop();
+                MizLib.downloadFile(backdropUrl,
+                        FileUtils.getMovieBackdrop(mContext, String.valueOf(movie.getId())), true);
+            }
 
-                if (!MizLib.downloadFile(mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop(), backdropFile))
-                    MizLib.downloadFile(mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop(), backdropFile);
+            // Download the collection image
+            if (movie.getCollection() != null &&
+                    !TextUtils.isEmpty(movie.getCollection().getPosterPath())) {
+                String collectionUrl = mTmdbConfiguration.getImages().getPosterUrl() +
+                        movie.getCollection().getPosterPath();
+                MizLib.downloadFile(collectionUrl,
+                        FileUtils.getMovieThumb(mContext, String.valueOf(movie.getCollection().getId())), true);
             }
         }
 
