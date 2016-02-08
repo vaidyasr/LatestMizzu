@@ -113,7 +113,6 @@ public class MovieIdentification {
     }
 
     public void start() {
-
         // Go through all files
         for (int i = 0; i < mMovieStructures.size(); i++) {
             if (mCancel)
@@ -299,53 +298,14 @@ public class MovieIdentification {
                 movie.getCollection() == null ? "" : String.valueOf(movie.getCollection().getId()),
                 "0", "0", String.valueOf(System.currentTimeMillis()));
 
-        updateNotification(movie);
+        performCallback(movie);
     }
 
-    private void updateNotification(TmdbMovie movie) {
-        File backdropFile = FileUtils.getMovieBackdrop(mContext, movie.getId());
-        if (!backdropFile.exists())
-            backdropFile = FileUtils.getMovieThumb(mContext, movie.getId());
-
+    private void performCallback(TmdbMovie movie) {
         if (mCallback != null) {
-            try {
-                mCallback.onMovieAdded(movie.getTitle(),
-                        mPicasso
-                                .load(FileUtils.getMovieThumb(mContext, movie.getId()))
-                                .resize(getNotificationImageSizeSmall(), (int) (getNotificationImageSizeSmall() * 1.5))
-                                .get(),
-                        mPicasso
-                                .load(backdropFile)
-                                .resize(getNotificationImageWidth(), getNotificationImageHeight())
-                                .skipMemoryCache()
-                                .get(),
-                        mCount);
-            } catch (Exception e) {
-                mCallback.onMovieAdded(movie.getTitle(), null, null, mCount);
-            }
+            mCallback.onMovieAdded(movie.getTitle(), movie.getId(), mCount);
         }
 
         LocalBroadcastUtils.updateMovieLibrary(mContext);
-    }
-
-    // These variables don't need to be re-initialized
-    private int widgetWidth = 0, widgetHeight = 0, smallSize = 0;
-
-    private int getNotificationImageWidth() {
-        if (widgetWidth == 0)
-            widgetWidth = MizLib.getLargeNotificationWidth(mContext);
-        return widgetWidth;
-    }
-
-    private int getNotificationImageHeight() {
-        if (widgetHeight == 0)
-            widgetHeight = (int) (MizLib.getLargeNotificationWidth(mContext) / 1.778);
-        return widgetHeight;
-    }
-
-    private int getNotificationImageSizeSmall() {
-        if (smallSize == 0)
-            smallSize = MizLib.getThumbnailNotificationSize(mContext);
-        return smallSize;
     }
 }

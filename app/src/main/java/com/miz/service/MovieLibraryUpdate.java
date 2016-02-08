@@ -27,7 +27,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -52,12 +51,16 @@ import com.miz.mizuu.CancelLibraryUpdate;
 import com.miz.mizuu.Main;
 import com.miz.mizuu.MizuuApplication;
 import com.miz.mizuu.R;
+import com.miz.utils.FileUtils;
 import com.miz.utils.LocalBroadcastUtils;
 import com.miz.utils.MovieDatabaseUtils;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static com.miz.functions.PreferenceKeys.CLEAR_LIBRARY_MOVIES;
 import static com.miz.functions.PreferenceKeys.REMOVE_UNAVAILABLE_FILES_MOVIES;
@@ -65,366 +68,423 @@ import static com.miz.functions.PreferenceKeys.SYNC_WITH_TRAKT;
 
 public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpdateCallback {
 
-	public static final String STOP_MOVIE_LIBRARY_UPDATE = "mizuu-stop-movie-library-update";
-	private ArrayList<FileSource> mFileSources;
-	private ArrayList<MovieFileSource<?>> mMovieFileSources;
-	private ArrayList<MovieStructure> mMovieQueue = new ArrayList<>();
-	private boolean mClearLibrary, mClearUnavailable, mSyncLibraries, mStopUpdate;
-	private int mTotalFiles, mCount;
-	private SharedPreferences mSettings;
-	private Editor mEditor;
-	private final int NOTIFICATION_ID = 200, POST_UPDATE_NOTIFICATION = 213;
-	private NotificationManager mNotificationManager;
-	private NotificationCompat.Builder mBuilder;
-	private MovieIdentification mMovieIdentification;
+    public static final String STOP_MOVIE_LIBRARY_UPDATE = "mizuu-stop-movie-library-update";
+    private ArrayList<FileSource> mFileSources;
+    private ArrayList<MovieFileSource<?>> mMovieFileSources;
+    private ArrayList<MovieStructure> mMovieQueue = new ArrayList<>();
+    private boolean mClearLibrary, mClearUnavailable, mSyncLibraries, mStopUpdate;
+    private int mTotalFiles, mCount, mWidgetWidth = 0, mWidgetHeight = 0, mWidgetSmallWidth = 0,
+            mWidgetSmallHeight = 0;
+    private SharedPreferences mSettings;
+    private Editor mEditor;
+    private final int NOTIFICATION_ID = 200, POST_UPDATE_NOTIFICATION = 213;
+    private NotificationManager mNotificationManager;
+    private NotificationCompat.Builder mBuilder;
+    private MovieIdentification mMovieIdentification;
 
-	public MovieLibraryUpdate() {
-		super("MovieLibraryUpdate");
-	}
+    public MovieLibraryUpdate() {
+        super("MovieLibraryUpdate");
+    }
 
-	public MovieLibraryUpdate(String name) {
-		super(name);
-	}
+    public MovieLibraryUpdate(String name) {
+        super(name);
+    }
 
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
 
-		log("onDestroy()");
+        log("onDestroy()");
 
-		if (mNotificationManager == null)
-			mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (mNotificationManager == null)
+            mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-		mNotificationManager.cancel(NOTIFICATION_ID);
+        mNotificationManager.cancel(NOTIFICATION_ID);
 
-		reloadLibrary();
-		
-		showPostUpdateNotification();
+        reloadLibrary();
 
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
+        showPostUpdateNotification();
 
-		MizLib.scheduleMovieUpdate(this);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
 
-		if (Trakt.hasTraktAccount(this) && mSyncLibraries && mCount > 0) {
-			getApplicationContext().startService(new Intent(getApplicationContext(), TraktMoviesSyncService.class));
-		}
-	}
+        MizLib.scheduleMovieUpdate(this);
 
-	@Override
-	protected void onHandleIntent(Intent intent) {
+        if (Trakt.hasTraktAccount(this) && mSyncLibraries && mCount > 0) {
+            getApplicationContext().startService(new Intent(getApplicationContext(), TraktMoviesSyncService.class));
+        }
+    }
 
-		log("clear()");
+    @Override
+    protected void onHandleIntent(Intent intent) {
 
-		// Clear and set up all variables
-		clear();
+        log("clear()");
 
-		log("setup()");
+        // Clear and set up all variables
+        clear();
 
-		// Set up Notification, variables, etc.
-		setup();
+        log("setup()");
 
-		log("loadFileSources()");
+        // Set up Notification, variables, etc.
+        setup();
 
-		// Load all file sources from the database
-		loadFileSources();
+        log("loadFileSources()");
 
-		log("setupMovieFileSources()");
+        // Load all file sources from the database
+        loadFileSources();
 
-		// Add the different file sources to the MovieFileSource ArrayList
-		setupMovieFileSources(mClearLibrary);
+        log("setupMovieFileSources()");
 
-		if (mStopUpdate)
-			return;
+        // Add the different file sources to the MovieFileSource ArrayList
+        setupMovieFileSources(mClearLibrary);
 
-		log("removeUnidentifiedFiles()");
+        if (mStopUpdate)
+            return;
 
-		// Remove unavailable movies, so we can try to identify them again
-		if (!mClearLibrary)
-			removeUnidentifiedFiles();
+        log("removeUnidentifiedFiles()");
 
-		if (mStopUpdate)
-			return;
+        // Remove unavailable movies, so we can try to identify them again
+        if (!mClearLibrary)
+            removeUnidentifiedFiles();
 
-		// Check if the library should be cleared
-		if (mClearLibrary) {
+        if (mStopUpdate)
+            return;
 
-			// Reset the preference, so it isn't checked the next
-			// time the user wants to update the library
-			mEditor = mSettings.edit();
-			mEditor.putBoolean(CLEAR_LIBRARY_MOVIES, false);
-			mEditor.apply();
+        // Check if the library should be cleared
+        if (mClearLibrary) {
 
-			log("removeMoviesFromDatabase()");
+            // Reset the preference, so it isn't checked the next
+            // time the user wants to update the library
+            mEditor = mSettings.edit();
+            mEditor.putBoolean(CLEAR_LIBRARY_MOVIES, false);
+            mEditor.apply();
 
-			// Remove all entries from the database
-			removeMoviesFromDatabase();
-		}
+            log("removeMoviesFromDatabase()");
 
-		if (mStopUpdate)
-			return;
+            // Remove all entries from the database
+            removeMoviesFromDatabase();
+        }
 
-		// Check if we should remove all unavailable files.
-		// Note that this only makes sense if we haven't already cleared the library.
-		if (!mClearLibrary && mClearUnavailable) {
+        if (mStopUpdate)
+            return;
 
-			log("removeUnavailableFiles()");
+        // Check if we should remove all unavailable files.
+        // Note that this only makes sense if we haven't already cleared the library.
+        if (!mClearLibrary && mClearUnavailable) {
 
-			// Remove all unavailable files from the database
-			removeUnavailableFiles();
-		}
+            log("removeUnavailableFiles()");
 
-		log("searchFolders()");
+            // Remove all unavailable files from the database
+            removeUnavailableFiles();
+        }
 
-		if (mStopUpdate)
-			return;
-		
-		reloadLibrary();
+        log("searchFolders()");
 
-		// Search all folders
-		searchFolders();
+        if (mStopUpdate)
+            return;
 
-		if (mStopUpdate)
-			return;
-		log("mTotalFiles > 0 check");
+        reloadLibrary();
 
-		// Check if we've found any files to identify
-		if (mTotalFiles > 0) {
-			log("updateMovies()");
+        // Search all folders
+        searchFolders();
 
-			// Start the actual movie update / identification task
-			updateMovies();
-		}
-	}
-	
-	private void reloadLibrary() {
-		log("reloadLibrary()");
-		
-		LocalBroadcastUtils.updateMovieLibrary(getApplicationContext());
-	}
+        if (mStopUpdate)
+            return;
+        log("mTotalFiles > 0 check");
 
-	private void loadFileSources() {
-		mFileSources = new ArrayList<>();
-		DbAdapterSources dbHelperSources = MizuuApplication.getSourcesAdapter();
-		Cursor c = dbHelperSources.fetchAllMovieSources();
-		try {
-			while (c.moveToNext()) {
-				mFileSources.add(new FileSource(
-						c.getLong(c.getColumnIndex(DbAdapterSources.KEY_ROWID)),
-						c.getString(c.getColumnIndex(DbAdapterSources.KEY_FILEPATH)),
-						c.getInt(c.getColumnIndex(DbAdapterSources.KEY_FILESOURCE_TYPE)),
-						c.getString(c.getColumnIndex(DbAdapterSources.KEY_USER)),
-						c.getString(c.getColumnIndex(DbAdapterSources.KEY_PASSWORD)),
-						c.getString(c.getColumnIndex(DbAdapterSources.KEY_DOMAIN)),
-						c.getString(c.getColumnIndex(DbAdapterSources.KEY_TYPE))
-						));
-			}
-		} catch (Exception e) {
-		} finally {
-			c.close();
-		}
-	}
+        // Check if we've found any files to identify
+        if (mTotalFiles > 0) {
+            log("updateMovies()");
 
-	private void setupMovieFileSources(boolean mClearLibrary) {
-		for (FileSource fileSource : mFileSources) {
-			if (mStopUpdate)
-				return;
-			switch (fileSource.getFileSourceType()) {
-			case FileSource.FILE:
-				mMovieFileSources.add(new FileMovie(getApplicationContext(), fileSource, mClearLibrary));
-				break;
-			case FileSource.SMB:
-				mMovieFileSources.add(new SmbMovie(getApplicationContext(), fileSource, mClearLibrary));
-				break;
-			case FileSource.UPNP:
-				mMovieFileSources.add(new UpnpMovie(getApplicationContext(), fileSource, mClearLibrary));
-				break;
-			}
-		}
-	}
+            // Start the actual movie update / identification task
+            updateMovies();
+        }
+    }
 
-	private void removeUnidentifiedFiles() {
-		for (MovieFileSource<?> movieFileSource : mMovieFileSources) {
-			movieFileSource.removeUnidentifiedFiles();
-		}
-	}
+    private void reloadLibrary() {
+        log("reloadLibrary()");
 
-	private void removeMoviesFromDatabase() {
-		MovieDatabaseUtils.deleteAllMovies(this);
-	}
+        LocalBroadcastUtils.updateMovieLibrary(getApplicationContext());
+    }
 
-	private void removeUnavailableFiles() {
-		for (MovieFileSource<?> movieFileSource : mMovieFileSources) {
-			movieFileSource.removeUnavailableFiles();
-		}
-	}
+    private void loadFileSources() {
+        mFileSources = new ArrayList<>();
+        DbAdapterSources dbHelperSources = MizuuApplication.getSourcesAdapter();
+        Cursor c = dbHelperSources.fetchAllMovieSources();
+        try {
+            while (c.moveToNext()) {
+                mFileSources.add(new FileSource(
+                        c.getLong(c.getColumnIndex(DbAdapterSources.KEY_ROWID)),
+                        c.getString(c.getColumnIndex(DbAdapterSources.KEY_FILEPATH)),
+                        c.getInt(c.getColumnIndex(DbAdapterSources.KEY_FILESOURCE_TYPE)),
+                        c.getString(c.getColumnIndex(DbAdapterSources.KEY_USER)),
+                        c.getString(c.getColumnIndex(DbAdapterSources.KEY_PASSWORD)),
+                        c.getString(c.getColumnIndex(DbAdapterSources.KEY_DOMAIN)),
+                        c.getString(c.getColumnIndex(DbAdapterSources.KEY_TYPE))
+                ));
+            }
+        } catch (Exception e) {
+        } finally {
+            c.close();
+        }
+    }
 
-	private void searchFolders() {
-		// Temporary collections
-		List<String> tempList = null;
+    private void setupMovieFileSources(boolean mClearLibrary) {
+        for (FileSource fileSource : mFileSources) {
+            if (mStopUpdate)
+                return;
+            switch (fileSource.getFileSourceType()) {
+                case FileSource.FILE:
+                    mMovieFileSources.add(new FileMovie(getApplicationContext(), fileSource, mClearLibrary));
+                    break;
+                case FileSource.SMB:
+                    mMovieFileSources.add(new SmbMovie(getApplicationContext(), fileSource, mClearLibrary));
+                    break;
+                case FileSource.UPNP:
+                    mMovieFileSources.add(new UpnpMovie(getApplicationContext(), fileSource, mClearLibrary));
+                    break;
+            }
+        }
+    }
 
-		for (int j = 0; j < mMovieFileSources.size(); j++) {
-			updateMovieScaningNotification(mMovieFileSources.get(j).toString());
-			tempList = mMovieFileSources.get(j).searchFolder();
-			for (int i = 0; i < tempList.size(); i++) {
-				mMovieQueue.add(new MovieStructure(tempList.get(i)));
-			}
-		}
+    private void removeUnidentifiedFiles() {
+        for (MovieFileSource<?> movieFileSource : mMovieFileSources) {
+            movieFileSource.removeUnidentifiedFiles();
+        }
+    }
 
-		// Clean up...
-		if (tempList != null)
-			tempList.clear();
+    private void removeMoviesFromDatabase() {
+        MovieDatabaseUtils.deleteAllMovies(this);
+    }
 
-		mTotalFiles = mMovieQueue.size();
-	}
+    private void removeUnavailableFiles() {
+        for (MovieFileSource<?> movieFileSource : mMovieFileSources) {
+            movieFileSource.removeUnavailableFiles();
+        }
+    }
 
-	private void setup() {
-		LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mMessageReceiver, new IntentFilter(STOP_MOVIE_LIBRARY_UPDATE));
+    private void searchFolders() {
+        // Temporary collections
+        List<String> tempList = null;
 
-		// Set up cancel dialog intent
-		Intent notificationIntent = new Intent(this, CancelLibraryUpdate.class);
-		notificationIntent.putExtra("isMovie", true);
-		notificationIntent.setAction(Intent.ACTION_MAIN);
-		notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, NOTIFICATION_ID, notificationIntent, 0);
+        for (int j = 0; j < mMovieFileSources.size(); j++) {
+            updateMovieScaningNotification(mMovieFileSources.get(j).toString());
+            tempList = mMovieFileSources.get(j).searchFolder();
+            for (int i = 0; i < tempList.size(); i++) {
+                mMovieQueue.add(new MovieStructure(tempList.get(i)));
+            }
+        }
 
-		// Setup up notification
-		mBuilder = new NotificationCompat.Builder(getApplicationContext());
+        // Clean up...
+        if (tempList != null)
+            tempList.clear();
+
+        mTotalFiles = mMovieQueue.size();
+    }
+
+    private void setup() {
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mMessageReceiver, new IntentFilter(STOP_MOVIE_LIBRARY_UPDATE));
+
+        // Set up cancel dialog intent
+        Intent notificationIntent = new Intent(this, CancelLibraryUpdate.class);
+        notificationIntent.putExtra("isMovie", true);
+        notificationIntent.setAction(Intent.ACTION_MAIN);
+        notificationIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, NOTIFICATION_ID, notificationIntent, 0);
+
+        // Setup up notification
+        mBuilder = new NotificationCompat.Builder(getApplicationContext());
         mBuilder.setColor(getResources().getColor(R.color.color_primary));
-		mBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
-		mBuilder.setSmallIcon(R.drawable.ic_sync_white_24dp);
-		mBuilder.setTicker(getString(R.string.updatingMovies));
-		mBuilder.setContentTitle(getString(R.string.updatingMovies));
-		mBuilder.setContentText(getString(R.string.gettingReady));
-		mBuilder.setContentIntent(contentIntent);
-		mBuilder.setOngoing(true);
-		mBuilder.setOnlyAlertOnce(true);
-		mBuilder.addAction(R.drawable.ic_close_white_24dp, getString(android.R.string.cancel), contentIntent);
+        mBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+        mBuilder.setSmallIcon(R.drawable.ic_sync_white_24dp);
+        mBuilder.setTicker(getString(R.string.updatingMovies));
+        mBuilder.setContentTitle(getString(R.string.updatingMovies));
+        mBuilder.setContentText(getString(R.string.gettingReady));
+        mBuilder.setContentIntent(contentIntent);
+        mBuilder.setOngoing(true);
+        mBuilder.setOnlyAlertOnce(true);
+        mBuilder.addAction(R.drawable.ic_close_white_24dp, getString(android.R.string.cancel), contentIntent);
 
-		// Build notification
-		Notification updateNotification = mBuilder.build();
+        // Build notification
+        Notification updateNotification = mBuilder.build();
 
-		// Show the notification
-		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.notify(NOTIFICATION_ID, updateNotification);
+        // Show the notification
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(NOTIFICATION_ID, updateNotification);
 
-		// Tell the system that this is an ongoing notification, so it shouldn't be killed
-		startForeground(NOTIFICATION_ID, updateNotification);
+        // Tell the system that this is an ongoing notification, so it shouldn't be killed
+        startForeground(NOTIFICATION_ID, updateNotification);
 
-		mSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		mClearLibrary = mSettings.getBoolean(CLEAR_LIBRARY_MOVIES, false);
-		mClearUnavailable = mSettings.getBoolean(REMOVE_UNAVAILABLE_FILES_MOVIES, false);
-		mSyncLibraries = mSettings.getBoolean(SYNC_WITH_TRAKT, true);
-	}
+        mSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        mClearLibrary = mSettings.getBoolean(CLEAR_LIBRARY_MOVIES, false);
+        mClearUnavailable = mSettings.getBoolean(REMOVE_UNAVAILABLE_FILES_MOVIES, false);
+        mSyncLibraries = mSettings.getBoolean(SYNC_WITH_TRAKT, true);
+    }
 
-	private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			mStopUpdate = true;
-			
-			if (mMovieIdentification != null)
-				mMovieIdentification.cancel();
-		}
-	};
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mStopUpdate = true;
 
-	private void updateMovies() {
-		TmdbApiService service = TmdbApi.getInstance();
-		try {
-			TmdbConfiguration config = service.getConfiguration(MizLib.getTmdbApiKey(this)).execute().body();
+            if (mMovieIdentification != null)
+                mMovieIdentification.cancel();
+        }
+    };
+
+    private void updateMovies() {
+        TmdbApiService service = TmdbApi.getInstance();
+        try {
+            TmdbConfiguration config = service.getConfiguration(MizLib.getTmdbApiKey(this)).execute().body();
             MizLib.setTmdbImageBaseUrl(this, config.getImages().getBaseUrl());
 
             mMovieIdentification = new MovieIdentification(getApplicationContext(), this, mMovieQueue, config);
             mMovieIdentification.start();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-	private void clear() {
-		// Lists
-		mFileSources = new ArrayList<>();
-		mMovieFileSources = new ArrayList<>();
-		mMovieQueue = new ArrayList<>();
+    private void clear() {
+        // Lists
+        mFileSources = new ArrayList<>();
+        mMovieFileSources = new ArrayList<>();
+        mMovieQueue = new ArrayList<>();
 
-		// Booleans
-		mClearLibrary = false;
-		mClearUnavailable = false;
-		mSyncLibraries = true;
-		mStopUpdate = false;
+        // Booleans
+        mClearLibrary = false;
+        mClearUnavailable = false;
+        mSyncLibraries = true;
+        mStopUpdate = false;
 
-		// Other variables
-		mEditor = null;
-		mSettings = null;
-		mTotalFiles = 0;
-		mNotificationManager = null;
-		mBuilder = null;
-	}
+        // Other variables
+        mEditor = null;
+        mSettings = null;
+        mTotalFiles = 0;
+        mNotificationManager = null;
+        mBuilder = null;
+    }
 
-	private void log(String msg) {
-		if (BuildConfig.DEBUG)
-			Log.d("MovieLibraryUpdate", msg);
-	}
+    private void log(String msg) {
+        if (BuildConfig.DEBUG)
+            Log.d("MovieLibraryUpdate", msg);
+    }
 
-	@Override
-	public void onMovieAdded(String title, Bitmap cover, Bitmap backdrop, int count) {
-		mCount = count;
-		updateMovieAddedNotification(title, cover, backdrop);
-	}
+    @Override
+    public void onMovieAdded(String title, int movieId, int count) {
+        mCount = count;
+        updateMovieAddedNotification(title, movieId);
+    }
 
-	private void updateMovieAddedNotification(String title, Bitmap cover, Bitmap backdrop) {
-		mBuilder.setLargeIcon(cover);
-		mBuilder.setContentTitle(getString(R.string.updatingMovies) + " (" + (int) ((100.0 / (double) mTotalFiles) * (double) mCount) + "%)");
-		mBuilder.setContentText(getString(R.string.stringJustAdded) + ": " + title);
-		mBuilder.setStyle(
-				new NotificationCompat.BigPictureStyle()
-				.setSummaryText(getString(R.string.stringJustAdded) + ": " + title)
-				.bigPicture(backdrop)
-				);
+    private void updateMovieAddedNotification(String title, int movieId) {
+        File posterFile = FileUtils.getMovieThumb(this, movieId);
+        File backdropFile = FileUtils.getMovieBackdrop(this, movieId);
+        if (!backdropFile.exists())
+            backdropFile = posterFile;
 
-		// Show the updated notification
-		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-	}
+        try {
+            mBuilder.setLargeIcon(Picasso.with(this).load(posterFile)
+                    .resize(getNotificationImageSmallWidth(), getNotificationImageSmallHeight())
+                    .get());
+        } catch (IOException e) {
+            mBuilder.setLargeIcon(null);
+        }
 
-	private void updateMovieScaningNotification(String filesource) {
-		mBuilder.setSmallIcon(R.drawable.ic_sync_white_24dp);
-		mBuilder.setContentTitle(getString(R.string.updatingMovies));
-		mBuilder.setContentText(getString(R.string.scanning) + ": " + filesource);
+        mBuilder.setContentTitle(getString(R.string.updatingMovies) +
+                " (" + calculateProgress(mTotalFiles, mCount) + ")");
 
-		// Show the updated notification
-		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
-	}
+        String contentText = String.format(Locale.getDefault(),
+                getString(R.string.stringJustAdded), title);
+        mBuilder.setContentText(contentText);
 
-	private void showPostUpdateNotification() {
-		// Set up cancel dialog intent
-		Intent notificationIntent = new Intent(this, Main.class);
-		notificationIntent.putExtra("fromUpdate", true);
-		notificationIntent.putExtra("startup", "1");
-		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        try {
+            mBuilder.setStyle(
+                    new NotificationCompat.BigPictureStyle()
+                            .setSummaryText(contentText)
+                            .bigPicture(Picasso.with(getApplicationContext()).load(backdropFile)
+                                    .resize(getNotificationImageWidth(),
+                                            getNotificationImageHeight())
+                                    .get())
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-		// Setup up notification
-		mBuilder = new NotificationCompat.Builder(getApplicationContext());
+        // Show the updated notification
+        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    }
+
+    private String calculateProgress(int totalFiles, int count) {
+        return (int) ((100.0 / (double) totalFiles) * (double) count) + "%";
+    }
+
+    private void updateMovieScaningNotification(String filesource) {
+        mBuilder.setSmallIcon(R.drawable.ic_sync_white_24dp);
+        mBuilder.setContentTitle(getString(R.string.updatingMovies));
+        mBuilder.setContentText(getString(R.string.scanning) + ": " + filesource);
+
+        // Show the updated notification
+        mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    }
+
+    private void showPostUpdateNotification() {
+        // Set up cancel dialog intent
+        Intent notificationIntent = new Intent(this, Main.class);
+        notificationIntent.putExtra("fromUpdate", true);
+        notificationIntent.putExtra("startup", "1");
+        notificationIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        // Setup up notification
+        mBuilder = new NotificationCompat.Builder(getApplicationContext());
         mBuilder.setColor(getResources().getColor(R.color.color_primary));
-		if (!mStopUpdate) {
-			mBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
-			mBuilder.setTicker(getString(R.string.finishedMovieLibraryUpdate));
-			mBuilder.setContentTitle(getString(R.string.finishedMovieLibraryUpdate));
-			mBuilder.setContentText(getString(R.string.stringJustAdded) + " " + mCount + " " + getResources().getQuantityString(R.plurals.moviesInLibrary, mCount));
-		} else {
-			mBuilder.setSmallIcon(R.drawable.ic_cancel_white_24dp);
-			mBuilder.setTicker(getString(R.string.stringUpdateCancelled));
-			mBuilder.setContentTitle(getString(R.string.stringUpdateCancelled));
-			mBuilder.setContentText(getString(R.string.stringJustAdded) + " " + mCount + " " + getResources().getQuantityString(R.plurals.moviesInLibrary, mCount, mCount));
-		}
-		mBuilder.setContentIntent(contentIntent);
-		mBuilder.setAutoCancel(true);
 
-		// Build notification
-		Notification updateNotification = mBuilder.build();
+        String contentText = String.format(Locale.getDefault(), getString(R.string.stringJustAdded),
+                mCount + " " + getResources().getQuantityString(R.plurals.moviesInLibrary, mCount));
 
-		// Show the notification
-		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		
-		if (mCount > 0)
-			mNotificationManager.notify(POST_UPDATE_NOTIFICATION, updateNotification);
-	}
+        if (!mStopUpdate) {
+            mBuilder.setSmallIcon(R.drawable.ic_done_white_24dp);
+            mBuilder.setTicker(getString(R.string.finishedMovieLibraryUpdate));
+            mBuilder.setContentTitle(getString(R.string.finishedMovieLibraryUpdate));
+            mBuilder.setContentText(contentText);
+        } else {
+            mBuilder.setSmallIcon(R.drawable.ic_cancel_white_24dp);
+            mBuilder.setTicker(getString(R.string.stringUpdateCancelled));
+            mBuilder.setContentTitle(getString(R.string.stringUpdateCancelled));
+            mBuilder.setContentText(contentText);
+        }
+        mBuilder.setContentIntent(contentIntent);
+        mBuilder.setAutoCancel(true);
+
+        // Build notification
+        Notification updateNotification = mBuilder.build();
+
+        // Show the notification
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (mCount > 0)
+            mNotificationManager.notify(POST_UPDATE_NOTIFICATION, updateNotification);
+    }
+
+    private int getNotificationImageWidth() {
+        if (mWidgetWidth == 0)
+            mWidgetWidth = MizLib.getLargeNotificationWidth(this);
+        return mWidgetWidth;
+    }
+
+    private int getNotificationImageHeight() {
+        if (mWidgetHeight == 0)
+            mWidgetHeight = (int) (MizLib.getLargeNotificationWidth(this) / 1.778);
+        return mWidgetHeight;
+    }
+
+    private int getNotificationImageSmallWidth() {
+        if (mWidgetSmallWidth == 0)
+            mWidgetSmallWidth = MizLib.getThumbnailNotificationSize(this);
+        return mWidgetSmallWidth;
+    }
+
+    private int getNotificationImageSmallHeight() {
+        if (mWidgetSmallHeight == 0)
+            mWidgetSmallHeight = (int) (MizLib.getThumbnailNotificationSize(this) * 1.5);
+        return mWidgetSmallHeight;
+    }
 }

@@ -16,8 +16,6 @@
 
 package com.miz.functions;
 
-import android.graphics.Bitmap;
-
 public interface MovieLibraryUpdateCallback {
-	void onMovieAdded(String title, Bitmap cover, Bitmap backdrop, int count);
+	void onMovieAdded(String title, int movieId, int count);
 }

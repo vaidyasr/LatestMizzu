@@ -21,7 +21,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,7 +32,6 @@ import com.miz.apis.tmdb.TmdbApi;
 import com.miz.apis.tmdb.TmdbApiService;
 import com.miz.apis.tmdb.models.TmdbConfiguration;
 import com.miz.functions.MizLib;
-import com.miz.functions.MovieLibraryUpdateCallback;
 import com.miz.identification.MovieIdentification;
 import com.miz.identification.MovieStructure;
 import com.miz.mizuu.R;
@@ -42,7 +40,7 @@ import com.miz.utils.LocalBroadcastUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class IdentifyMovieService extends IntentService implements MovieLibraryUpdateCallback {
+public class IdentifyMovieService extends IntentService {
 
 	private boolean mDebugging = true;
 	private String mLanguage, mFilepath;
@@ -114,7 +112,7 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 		try {
 			TmdbConfiguration config = service.getConfiguration(MizLib.getTmdbApiKey(this)).execute().body();
 			MizLib.setTmdbImageBaseUrl(this, config.getImages().getBaseUrl());
-			MovieIdentification identification = new MovieIdentification(this, this, mFiles, config);
+			MovieIdentification identification = new MovieIdentification(this, null, mFiles, config);
 			identification.setMovieId(Integer.valueOf(mMovieId));
 			identification.setCurrentMovieId(mOldMovieId);
 			identification.setLanguage(mLanguage);
@@ -154,11 +152,6 @@ public class IdentifyMovieService extends IntentService implements MovieLibraryU
 
 		// Tell the system that this is an ongoing notification, so it shouldn't be killed
 		startForeground(NOTIFICATION_ID, updateNotification);
-	}
-
-	@Override
-	public void onMovieAdded(String title, Bitmap cover, Bitmap backdrop, int count) {
-		// We're done!
 	}
 
 	private void log(String msg) {
