@@ -34,7 +34,6 @@ import com.miz.mizuu.MizuuApplication;
 import com.miz.utils.FileUtils;
 import com.miz.utils.LocalBroadcastUtils;
 import com.miz.utils.MovieDatabaseUtils;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +44,6 @@ import static com.miz.functions.PreferenceKeys.LANGUAGE_PREFERENCE;
 
 public class MovieIdentification {
 
-    private final Picasso mPicasso;
     private final MovieLibraryUpdateCallback mCallback;
     private final Context mContext;
     private final ArrayList<MovieStructure> mMovieStructures;
@@ -61,8 +59,6 @@ public class MovieIdentification {
         mCallback = callback;
         mMovieStructures = new ArrayList<>(files);
         mTmdbConfiguration = tmdbConfiguration;
-
-        mPicasso = Picasso.with(mContext);
 
         // Get the language preference
         getLanguagePreference();

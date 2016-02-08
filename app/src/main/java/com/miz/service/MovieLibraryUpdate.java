@@ -81,6 +81,7 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
     private NotificationManager mNotificationManager;
     private NotificationCompat.Builder mBuilder;
     private MovieIdentification mMovieIdentification;
+    private Picasso mPicasso;
 
     public MovieLibraryUpdate() {
         super("MovieLibraryUpdate");
@@ -318,6 +319,8 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
         mClearLibrary = mSettings.getBoolean(CLEAR_LIBRARY_MOVIES, false);
         mClearUnavailable = mSettings.getBoolean(REMOVE_UNAVAILABLE_FILES_MOVIES, false);
         mSyncLibraries = mSettings.getBoolean(SYNC_WITH_TRAKT, true);
+
+        mPicasso = Picasso.with(this);
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -381,7 +384,7 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
             backdropFile = posterFile;
 
         try {
-            mBuilder.setLargeIcon(Picasso.with(this).load(posterFile)
+            mBuilder.setLargeIcon(mPicasso.load(posterFile)
                     .resize(getNotificationImageSmallWidth(), getNotificationImageSmallHeight())
                     .get());
         } catch (IOException e) {
@@ -399,7 +402,7 @@ public class MovieLibraryUpdate extends IntentService implements MovieLibraryUpd
             mBuilder.setStyle(
                     new NotificationCompat.BigPictureStyle()
                             .setSummaryText(contentText)
-                            .bigPicture(Picasso.with(getApplicationContext()).load(backdropFile)
+                            .bigPicture(mPicasso.load(backdropFile)
                                     .resize(getNotificationImageWidth(),
                                             getNotificationImageHeight())
                                     .get())
