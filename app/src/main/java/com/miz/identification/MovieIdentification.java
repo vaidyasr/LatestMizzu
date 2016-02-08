@@ -219,35 +219,30 @@ public class MovieIdentification {
     }
 
     private void createMovie(MovieStructure ms, TmdbMovie movie) {
-        boolean downloadCovers = true;
-
         if (movie.getId() != DbAdapterMovies.UNIDENTIFIED_ID) {
-            // We only want to download covers if the movie doesn't already exist
-            downloadCovers = !MizuuApplication.getMovieAdapter().movieExists(movie.getId());
-        }
-
-        if (downloadCovers) {
             // Download the cover image and try again if it fails
-            if (!TextUtils.isEmpty(movie.getPoster())) {
+            File movieThumb = FileUtils.getMovieThumb(mContext, movie.getId());
+            if (!movieThumb.exists() && !TextUtils.isEmpty(movie.getPoster())) {
                 String posterUrl = mTmdbConfiguration.getImages().getPosterUrl() + movie.getPoster();
-                MizLib.downloadFile(posterUrl,
-                        FileUtils.getMovieThumb(mContext, movie.getId()), true);
+                MizLib.downloadFile(posterUrl, movieThumb, true);
             }
 
             // Download the backdrop image and try again if it fails
-            if (!TextUtils.isEmpty(movie.getBackdrop())) {
+            File movieBackdrop = FileUtils.getMovieBackdrop(mContext, movie.getId());
+            if (!movieBackdrop.exists() && !TextUtils.isEmpty(movie.getBackdrop())) {
                 String backdropUrl = mTmdbConfiguration.getImages().getBackdropUrl() + movie.getBackdrop();
-                MizLib.downloadFile(backdropUrl,
-                        FileUtils.getMovieBackdrop(mContext, movie.getId()), true);
+                MizLib.downloadFile(backdropUrl, movieBackdrop, true);
             }
 
             // Download the collection image
-            if (movie.getCollection() != null &&
-                    !TextUtils.isEmpty(movie.getCollection().getPosterPath())) {
-                String collectionUrl = mTmdbConfiguration.getImages().getPosterUrl() +
-                        movie.getCollection().getPosterPath();
-                MizLib.downloadFile(collectionUrl,
-                        FileUtils.getMovieThumb(mContext, movie.getCollection().getId()), true);
+            if (movie.getCollection() != null) {
+                File collectionThumb = FileUtils.getMovieThumb(mContext, movie.getCollection().getId());
+                if (!collectionThumb.exists() &&
+                        !TextUtils.isEmpty(movie.getCollection().getPosterPath())) {
+                    String collectionUrl = mTmdbConfiguration.getImages().getPosterUrl() +
+                            movie.getCollection().getPosterPath();
+                    MizLib.downloadFile(collectionUrl, collectionThumb, true);
+                }
             }
         }
 
