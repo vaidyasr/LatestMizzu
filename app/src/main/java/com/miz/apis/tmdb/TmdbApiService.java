@@ -57,6 +57,22 @@ public interface TmdbApiService {
             @Query("append_to_response") String appendToResponse);
 
     /**
+     * Get the full movie information for a specific movie id,
+     * including alternative titles, credits, images, release
+     * dates, videos (trailers) and similar movies.
+     *
+     * @param movieId Id of the movie to retrieve information for.
+     * @param apiKey TMDb API key.
+     * @param language ISO 639-1 code.
+     * @return
+     */
+    @GET("movie/{id}?append_to_response=alternative_titles,credits,images,release_dates,videos,similar")
+    Call<TmdbMovie> getFullMovie(
+            @Path("id") int movieId,
+            @Query("api_key") String apiKey,
+            @Query("language") String language);
+
+    /**
      * Get the images (posters and backdrops) for a specific movie id.
      *
      * @param movieId Id of the movie to retrieve images for.

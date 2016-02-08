@@ -195,6 +195,7 @@ public class MovieIdentification {
             } else {
                 try {
                     movie = service.getMovie(getMovieId(), apiKey, mLocale, null).execute().body();
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -203,7 +204,7 @@ public class MovieIdentification {
             if (!overrideMovieId() && results.size() > 0) {
                 // Automatic library update
                 try {
-                    movie = service.getMovie(results.get(0).getId(), apiKey, mLocale, null).execute().body();
+                    movie = service.getFullMovie(results.get(0).getId(), apiKey, mLocale).execute().body();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

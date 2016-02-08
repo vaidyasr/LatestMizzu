@@ -18,6 +18,12 @@ public class TmdbMovie {
     List<TmdbProductionCompany> production_companies;
     List<TmdbProductionCountry> production_countries;
     List<TmdbLanguage> spoken_languages;
+    TmdbAlternativeTitles alternative_titles;
+    TmdbCredits credits;
+    TmdbMovieImages images;
+    TmdbReleaseDates release_dates;
+    TmdbVideos videos;
+    TmdbSimilarMovies similar;
 
     public int getId() {
         return id;
@@ -117,6 +123,30 @@ public class TmdbMovie {
 
     public List<TmdbLanguage> getSpokenLanguages() {
         return spoken_languages;
+    }
+
+    public TmdbAlternativeTitles getAlternativeTitles() {
+        return alternative_titles;
+    }
+
+    public TmdbCredits getCredits() {
+        return credits;
+    }
+
+    public TmdbMovieImages getImages() {
+        return images;
+    }
+
+    public TmdbReleaseDates getReleaseDates() {
+        return release_dates;
+    }
+
+    public TmdbVideos getVideos() {
+        return videos;
+    }
+
+    public TmdbSimilarMovies getSimilarMovies() {
+        return similar;
     }
 
 }
