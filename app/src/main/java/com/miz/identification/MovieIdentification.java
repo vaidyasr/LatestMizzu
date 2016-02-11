@@ -135,7 +135,7 @@ public class MovieIdentification {
                 // Check if there's an IMDb ID and attempt to search based on it
                 if (ms.hasImdbId()) {
                     try {
-                        results = service.find(apiKey, ms.getImdbId(), "imdb_id", null).execute()
+                        results = service.find(ms.getImdbId(), apiKey, "imdb_id", null).execute()
                                 .body().getMovieResults();
                     } catch (IOException e) {
                         e.printStackTrace();
